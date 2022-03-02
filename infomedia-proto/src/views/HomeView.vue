@@ -1,5 +1,32 @@
 <script setup>
-import queryField from '../components/queryField.vue'
+import { onMounted, ref, reactive } from 'vue'
+import QueryField from '../components/QueryField.vue'
+import DocumentsPanel from '../components/DocumentsPanel.vue'
+import * as d3 from 'd3'
+
+let docs = reactive({})
+let loaded = ref(false)
+
+
+onMounted(() => {
+  // Load Infomedia CSV
+  console.log("Logging data...")
+  d3.csv('/data/infomedia_raw.csv', row => {
+    let obj = {}
+    obj.id = row.duid
+    obj.text = row.full_text
+    obj.heading = row.heading
+    obj.date = row.publishdate
+    obj.source = row.sourcename
+    obj.year = +row.year
+    docs[obj.id] = obj
+  })
+  .then(() => {
+    console.log("...done.")
+    loaded.value = true
+  })
+})
+
 </script>
 
 <template>
@@ -32,12 +59,13 @@ import queryField from '../components/queryField.vue'
       width: 600px;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: stretch;
       justify-content: center;
     ">
-      <div>
-        Document results
-      </div>
+      <documentsPanel
+        :docs="Object.values(docs)"
+        :data-loaded="loaded"
+      />
     </div>
   </main>
 </template>
