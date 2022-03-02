@@ -17,14 +17,6 @@ d3.csv('/data/infomedia_raw.csv', row => {
 	obj.id = row.duid
 	obj.text = row.full_text
 	obj.heading =	row.heading
-	/*
-	obj.links = []
-	try {
-		obj.links = JSON.parse(row.links)
-	} catch(e) {
-		console.warn(e)
-	}
-	*/
 	obj.date = row.publishdate
 	obj.source = row.sourcename
 	obj.year = +row.year

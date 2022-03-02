@@ -1,4 +1,6 @@
-<script setup></script>
+<script setup>
+import queryField from '../components/queryField.vue'
+</script>
 
 <template>
   <main style="display: flex; flex-grow:1;">
@@ -11,9 +13,7 @@
         align-items: center;
         justify-content: center;
       ">
-        <div>
-          Header (query field)
-        </div>
+        <queryField/>
       </div>
       <div style="
         background-color: #333;
