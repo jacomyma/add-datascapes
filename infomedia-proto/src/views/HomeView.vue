@@ -1,13 +1,13 @@
 <script setup>
-import { onMounted, ref, reactive } from 'vue'
+import { onMounted, ref, reactive, watch } from 'vue'
 import QueryField from '../components/QueryField.vue'
 import DocumentsPanel from '../components/DocumentsPanel.vue'
 import * as d3 from 'd3'
 
 let docs = reactive({})
+let docsFiltered = ref([])
 let loaded = ref(false)
 let query = ref("")
-
 
 onMounted(() => {
   // Load Infomedia CSV
@@ -25,8 +25,21 @@ onMounted(() => {
   .then(() => {
     console.log("...done.")
     loaded.value = true
+    docsFiltered.value = Object.values(docs)
   })
 })
+
+watch(query, (newQuery) => {
+  if (newQuery && newQuery.length > 0) {
+    docsFiltered.value = Object.values(docs)
+      .filter((doc, i) => {
+        return i < 100
+      })
+  } else {
+    docsFiltered.value = Object.values(docs)
+  }
+})
+
 
 </script>
 
@@ -66,7 +79,7 @@ onMounted(() => {
       justify-content: center;
     ">
       <documentsPanel
-        :docs="Object.values(docs)"
+        :docs="docsFiltered"
         :data-loaded="loaded"
       />
     </div>
