@@ -1,13 +1,16 @@
 <script setup>
+import Fuse from 'fuse.js'
 import { onMounted, ref, reactive, watch } from 'vue'
 import QueryField from '../components/QueryField.vue'
 import DocumentsPanel from '../components/DocumentsPanel.vue'
 import * as d3 from 'd3'
 
+let fuse
 let docs = reactive({})
 let docsFiltered = ref([])
 let loaded = ref(false)
 let query = ref("")
+
 
 onMounted(() => {
   // Load Infomedia CSV
@@ -26,15 +29,18 @@ onMounted(() => {
     console.log("...done.")
     loaded.value = true
     docsFiltered.value = Object.values(docs)
+    fuse = new Fuse(Object.values(docs), {
+      keys: ['heading', 'text']
+    })
   })
 })
 
 watch(query, (newQuery) => {
   if (newQuery && newQuery.length > 0) {
-    docsFiltered.value = Object.values(docs)
-      .filter((doc, i) => {
-        return i < 100
-      })
+    let results = fuse.search(query.value)
+    docsFiltered.value = results.map(r => {
+      return r.item
+    })
   } else {
     docsFiltered.value = Object.values(docs)
   }

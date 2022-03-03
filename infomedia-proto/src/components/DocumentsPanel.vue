@@ -6,7 +6,7 @@ const props = defineProps({
   dataLoaded: Boolean
 })
 
-const showText = ref(false)
+const showText = ref(true)
 
 let articleDisplayBatch = ref(25)
 let articleDisplayCount = ref(50)
