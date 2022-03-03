@@ -1,8 +1,19 @@
-<script setup></script>
+<script setup>
+import { ref, watch } from 'vue'
+
+const emit = defineEmits(['query'])
+
+const query = ref('')
+
+function validate() {
+  emit('query', query.value)
+}
+
+</script>
 
 <template>
-	<form class="pure-form">
-    <input type="text" class="pure-input-rounded" style="margin-right: 12px"/>
-    <button type="submit" class="pure-button">Filter documents</button>
-</form>
+	<div class="pure-form">
+    <input type="text" v-model="query" @keyup.enter="validate" class="pure-input-rounded" style="margin-right: 12px"/>
+    <button class="pure-button" @click="validate">Filter</button>
+  </div>
 </template>

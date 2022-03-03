@@ -6,6 +6,7 @@ import * as d3 from 'd3'
 
 let docs = reactive({})
 let loaded = ref(false)
+let query = ref("")
 
 
 onMounted(() => {
@@ -30,7 +31,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <main style="display: flex; flex-grow:1;">
+  <main style="display: flex; flex-grow:1; overflow: hidden;">
     <div style="flex-grow:1; display: flex; flex-direction: column;">
       <div style="
         background-color: #444;
@@ -40,7 +41,9 @@ onMounted(() => {
         align-items: center;
         justify-content: center;
       ">
-        <queryField/>
+        <queryField
+          @query="(q) => query = q"
+        />
       </div>
       <div style="
         background-color: #333;
@@ -51,7 +54,7 @@ onMounted(() => {
         justify-content: center;
       ">
         <div>
-          Basemap
+          Basemap - Query: {{query || "None."}}
         </div>
       </div>
     </div>
