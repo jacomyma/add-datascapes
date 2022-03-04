@@ -24,6 +24,7 @@ const props = defineProps({
 
 const documentsByNE = ref({})
 const NEByDocument = ref({})
+const NECoordinates = ref({})
 const data2Loaded = ref(false)
 
 onMounted(() => {
@@ -49,7 +50,18 @@ onMounted(() => {
     documentsByNE.value = _documentsByNE
     NEByDocument.value = _NEByDocument
     data2Loaded.value = true
-    updateBasemap()
+  })
+  .then(() => {
+    console.log("Loading basemap data...")
+    let _NECoordinates = {}
+    d3.csv('/data/NE basemap.csv', row => {
+    	_NECoordinates[row['named entity']] = row
+	  })
+	  .then(() => {
+	    console.log("...basemap data loaded.")
+	    NECoordinates.value = _NECoordinates
+	    updateBasemap()
+	  })
   })
 })
 
