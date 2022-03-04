@@ -4,9 +4,10 @@
 			Loading...
 		</div>
 	</div>
-	<div v-else style="flex-grow: 1; display: flex;">
+	<div v-else style="flex-grow: 1; display: flex; position: relative">
 		<div style="flex-grow: 1;" id="basemap-container" onresize="updateBasemap()">
 		</div>
+		<div id="basemap-tooltip"></div>
 	</div>
 </template>
 
@@ -171,6 +172,24 @@ function updateBasemap() {
 		return 3*Math.sqrt(Math.log(1 + count))
 	}
 
+	var Tooltip = d3.select("#basemap-tooltip")
+
+  // Three function that change the tooltip when user hover / move / leave a cell
+  var mouseover = function(e, d) {
+    Tooltip
+      .style("opacity", 1)
+  }
+  var mousemove = function(e, d) {
+    Tooltip
+      .html(d['named entity']+"<br>present in "+d.count+" documents")
+      .style("left", (d3.pointer(e)[0]+20) + "px")
+      .style("top", (d3.pointer(e)[1]) + "px")
+  }
+  var mouseleave = function(e, d) {
+    Tooltip
+      .style("opacity", 0)
+  }
+
 	// Background
 	svg.append('g')
 	  .append('rect')
@@ -210,6 +229,9 @@ function updateBasemap() {
 	    .attr("cy", function (d) { return y(d.y); } )
 	    .attr("r", function (d) { return highlightScale(d.count) + 0.5*nodeMargin; })
 	    .style("fill", "#A12568")
+	    .on("mouseover", mouseover)
+	    .on("mousemove", mousemove)
+	    .on("mouseleave", mouseleave)
 
 	// Add dots (highlight)
 	svg.append('g')
@@ -221,8 +243,10 @@ function updateBasemap() {
 	    .attr("cy", function (d) { return y(d.y); } )
 	    .attr("r", function (d) { return highlightScale(d.count); })
 	    .style("fill", "#FEC260")
+			.on("mouseover", mouseover)
+	    .on("mousemove", mousemove)
+	    .on("mouseleave", mouseleave)
 
-	
 }
 
 </script>
