@@ -5,10 +5,7 @@
 		</div>
 	</div>
 	<div v-else style="flex-grow: 1; display: flex;">
-<!-- 		<div style="padding:6px;">
-			{{ docs.length }} documents, {{ Object.keys(documentsByNE).length }} named entities
-		</div> -->
-		<div style="flex-grow: 1;" id="basemapContainer" onresize="updateBasemap()">
+		<div style="flex-grow: 1;" id="basemap-container" onresize="updateBasemap()">
 		</div>
 	</div>
 </template>
@@ -55,7 +52,10 @@ onMounted(() => {
     console.log("Loading basemap data...")
     let _NECoordinates = {}
     d3.csv('/data/NE basemap.csv', row => {
-    	_NECoordinates[row['named entity']] = row
+    	let ne = row['named entity']
+    	if (_documentsByNE[ne] != undefined) {
+	    	_NECoordinates[ne] = row
+	    }
 	  })
 	  .then(() => {
 	    console.log("...basemap data loaded.")
@@ -74,6 +74,155 @@ watch(()=>props.docs, updateBasemap)
 
 function updateBasemap() {
 	console.log('Update basemap. Documents:', (props.docs || []).length)
+
+	if (!document.getElementById('basemap-container')) {
+		return
+	}
+
+	// Delete existing vis
+	document.getElementById('basemap-container').innerHTML = ''
+
+	// Get data
+	let docList = props.docs.map(d => d.id)
+	console.log("Compute index...")
+	// Aggregate the named entities of those documents
+	let neIndex = {}
+	docList.forEach(id => {
+		let neList = NEByDocument.value[id] || []
+		neList.forEach(ne => {
+			neIndex[ne] = (neIndex[ne] || 0) + 1
+		})
+	})
+	console.log("...done.")
+	const data = Object.values(NECoordinates.value).filter((d, i) => {
+		d.x = +d.x
+		d.y = +d.y
+		d.size = +d.size
+		if (isNaN(d.x) || isNaN(d.y) || isNaN(d.size)) return false
+		let ne = d['named entity']
+		d.count = neIndex[ne] || 0
+		return true
+	})
+
+	// Get size
+	const containerWidth = document.getElementById('basemap-container').offsetWidth
+	const containerHeight = document.getElementById('basemap-container').offsetHeight
+
+	// set the dimensions and margins of the graph
+	const margin = {top: 0, right: 0, bottom: 0, left: 0},
+	    width = containerWidth - margin.left - margin.right,
+	    height = containerHeight - margin.top - margin.bottom;
+	const nodeMargin = 8
+
+	// append the svg object to the body of the page
+	const svg = d3.select("#basemap-container")
+	  .append("svg")
+	    .attr("width", width + margin.left + margin.right)
+	    .attr("height", height + margin.top + margin.bottom)
+	  .append("g")
+	    .attr("transform",
+	          "translate(" + margin.left + "," + margin.top + ")");
+
+	// Plot the data
+
+	// Normalize ranges so that the two axes correspond (in the data)
+	var xRange = d3.extent(data, d => d.x)
+	var yRange = d3.extent(data, d => d.y)
+	if (xRange[1]-xRange[0] > yRange[1]-yRange[0]) {
+	  let yMean = 0.5*(yRange[0]+yRange[1])
+	  yRange[0] = yMean - 0.5*(xRange[1]-xRange[0])
+	  yRange[1] = yMean + 0.5*(xRange[1]-xRange[0])
+	} else {
+	  let xMean = 0.5*(xRange[0]+xRange[1])
+	  xRange[0] = xMean - 0.5*(yRange[1]-yRange[0])
+	  xRange[1] = xMean + 0.5*(yRange[1]-yRange[0])
+	}
+
+	// Normalize ranges so that the two axes correspond (in the picture)
+	var xPicRange = [3 * nodeMargin, width-3*nodeMargin]
+	var yPicRange = [3*nodeMargin, height-3*nodeMargin]
+	if (xPicRange[1]-xPicRange[0] < yPicRange[1]-yPicRange[0]) {
+	  let yMean = 0.5*(yPicRange[0]+yPicRange[1])
+	  yPicRange[0] = yMean - 0.5*(xPicRange[1]-xPicRange[0])
+	  yPicRange[1] = yMean + 0.5*(xPicRange[1]-xPicRange[0])
+	} else {
+	  let xMean = 0.5*(xPicRange[0]+xPicRange[1])
+	  xPicRange[0] = xMean - 0.5*(yPicRange[1]-yPicRange[0])
+	  xPicRange[1] = xMean + 0.5*(yPicRange[1]-yRange[0])
+	}
+
+	// Add X axis
+	var x = d3.scaleLinear()
+	  .domain(xRange)
+	  .range(xPicRange);
+	// svg.append("g")
+	//   .attr("transform", "translate(0," + height + ")")
+	//   .call(d3.axisBottom(x));
+
+	// Add Y axis
+	var y = d3.scaleLinear()
+	  .domain(yRange)
+	  .range([yPicRange[1], yPicRange[0]]);
+	// svg.append("g")
+	//   .call(d3.axisLeft(y));
+
+	const sizeRatio = .2;
+	const highlightScale = function(count) {
+		return 3*Math.sqrt(Math.log(1 + count))
+	}
+
+	// Background
+	svg.append('g')
+	  .append('rect')
+	    .attr('width', width)
+	    .attr('height', height)
+	    .style("fill", "#2A0944")
+
+	// Add dots background
+	svg.append('g')
+	  .selectAll("dot")
+	  .data(data)
+	  .enter()
+	  .append("circle")
+	    .attr("cx", function (d) { return x(d.x); } )
+	    .attr("cy", function (d) { return y(d.y); } )
+	    .attr("r", function (d) { return sizeRatio*d.size + nodeMargin; })
+	    .style("fill", "#3B185F")
+
+	// Add dots (non highlight)
+	svg.append('g')
+	  .selectAll("dot")
+	  .data(data)
+	  .enter()
+	  .append("circle")
+	    .attr("cx", function (d) { return x(d.x); } )
+	    .attr("cy", function (d) { return y(d.y); } )
+	    .attr("r", function (d) { return sizeRatio*d.size; })
+	    .style("fill", "#4e235a")
+
+	// Add dots (highlight halo)
+	svg.append('g')
+	  .selectAll("dot")
+	  .data(data.filter(d => d.count > 0))
+	  .enter()
+	  .append("circle")
+	    .attr("cx", function (d) { return x(d.x); } )
+	    .attr("cy", function (d) { return y(d.y); } )
+	    .attr("r", function (d) { return highlightScale(d.count) + 0.5*nodeMargin; })
+	    .style("fill", "#A12568")
+
+	// Add dots (highlight)
+	svg.append('g')
+	  .selectAll("dot")
+	  .data(data.filter(d => d.count > 0))
+	  .enter()
+	  .append("circle")
+	    .attr("cx", function (d) { return x(d.x); } )
+	    .attr("cy", function (d) { return y(d.y); } )
+	    .attr("r", function (d) { return highlightScale(d.count); })
+	    .style("fill", "#FEC260")
+
+	
 }
 
 </script>

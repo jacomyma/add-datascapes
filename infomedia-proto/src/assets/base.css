@@ -108,6 +108,7 @@ div.sticky {
   line-height: 1.6em;
   margin-top:  12px;
   margin-bottom:  6px;
+  word-wrap: break-word;
 }
 
 .pure-button {
