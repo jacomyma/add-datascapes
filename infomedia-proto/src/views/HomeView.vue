@@ -67,9 +67,6 @@ watch(query, (newQuery) => {
         background-color: #000;
         flex-grow: 1;
         display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
       ">
         <basemapPanel
           :docs="docsFiltered"
