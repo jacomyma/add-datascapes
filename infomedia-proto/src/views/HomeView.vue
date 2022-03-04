@@ -3,6 +3,7 @@ import Fuse from 'fuse.js'
 import { onMounted, ref, reactive, watch } from 'vue'
 import QueryField from '../components/QueryField.vue'
 import DocumentsPanel from '../components/DocumentsPanel.vue'
+import BasemapPanel from '../components/BasemapPanel.vue'
 import * as d3 from 'd3'
 
 let fuse
@@ -11,10 +12,9 @@ let docsFiltered = ref([])
 let loaded = ref(false)
 let query = ref("")
 
-
 onMounted(() => {
   // Load Infomedia CSV
-  console.log("Logging data...")
+  console.log("Loading documents data...")
   d3.csv('/data/infomedia_raw.csv', row => {
     let obj = {}
     obj.id = row.duid
@@ -26,7 +26,7 @@ onMounted(() => {
     docs[obj.id] = obj
   })
   .then(() => {
-    console.log("...done.")
+    console.log("...documents data loaded.")
     loaded.value = true
     docsFiltered.value = Object.values(docs)
     fuse = new Fuse(Object.values(docs), {
@@ -53,7 +53,6 @@ watch(query, (newQuery) => {
   <main style="display: flex; flex-grow:1; overflow: hidden;">
     <div style="flex-grow:1; display: flex; flex-direction: column;">
       <div style="
-        background-color: #444;
         height: 200px;
         display: flex;
         flex-direction: column;
@@ -65,16 +64,17 @@ watch(query, (newQuery) => {
         />
       </div>
       <div style="
-        background-color: #333;
+        background-color: #000;
         flex-grow: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
       ">
-        <div>
-          Basemap - Query: {{query || "None."}}
-        </div>
+        <basemapPanel
+          :docs="docsFiltered"
+          :data-loaded="loaded"
+        />
       </div>
     </div>
     <div style="
