@@ -181,7 +181,7 @@ function updateBasemap() {
   }
   var mousemove = function(e, d) {
     Tooltip
-      .html(d['named entity']+"<br>present in "+d.count+" documents")
+      .html(d['named entity']+"<br>Appears in "+d.count+" of these documents")
       .style("left", (d3.pointer(e)[0]+20) + "px")
       .style("top", (d3.pointer(e)[1]) + "px")
   }
@@ -195,7 +195,7 @@ function updateBasemap() {
 	  .append('rect')
 	    .attr('width', width)
 	    .attr('height', height)
-	    .style("fill", "#2A0944")
+	    .style("fill", "#c0cbcd")
 
 	// Add dots background
 	svg.append('g')
@@ -206,7 +206,7 @@ function updateBasemap() {
 	    .attr("cx", function (d) { return x(d.x); } )
 	    .attr("cy", function (d) { return y(d.y); } )
 	    .attr("r", function (d) { return sizeRatio*d.size + nodeMargin; })
-	    .style("fill", "#3B185F")
+	    .style("fill", "#bfbda8")
 
 	// Add dots (non highlight)
 	svg.append('g')
@@ -217,7 +217,7 @@ function updateBasemap() {
 	    .attr("cx", function (d) { return x(d.x); } )
 	    .attr("cy", function (d) { return y(d.y); } )
 	    .attr("r", function (d) { return sizeRatio*d.size; })
-	    .style("fill", "#4e235a")
+	    .style("fill", "#acaa92")
 
 	// Add dots (highlight halo)
 	svg.append('g')
@@ -228,7 +228,7 @@ function updateBasemap() {
 	    .attr("cx", function (d) { return x(d.x); } )
 	    .attr("cy", function (d) { return y(d.y); } )
 	    .attr("r", function (d) { return highlightScale(d.count)*d.size + 0.5*nodeMargin; })
-	    .style("fill", "#A12568")
+	    .style("fill", "#dfddce")
 	    .on("mouseover", mouseover)
 	    .on("mousemove", mousemove)
 	    .on("mouseleave", mouseleave)
@@ -242,7 +242,7 @@ function updateBasemap() {
 	    .attr("cx", function (d) { return x(d.x); } )
 	    .attr("cy", function (d) { return y(d.y); } )
 	    .attr("r", function (d) { return highlightScale(d.count)*d.size; })
-	    .style("fill", "#FEC260")
+	    .style("fill", "#303040")
 			.on("mouseover", mouseover)
 	    .on("mousemove", mousemove)
 	    .on("mouseleave", mouseleave)
