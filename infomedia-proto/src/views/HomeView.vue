@@ -6,11 +6,27 @@ import DocumentsPanel from '../components/DocumentsPanel.vue'
 import BasemapPanel from '../components/BasemapPanel.vue'
 import * as d3 from 'd3'
 
-let fuse
 let docs = reactive({})
 let docsFiltered = ref([])
 let loaded = ref(false)
 let query = ref("")
+let fuse
+const fuseOptions = {
+  includeScore: true,
+  distance: 300,
+  threshold: .3,
+  keys: [
+    {
+      name: 'heading',
+      weight: 2
+    },
+    {
+      name: 'text',
+      weight: 1
+    }
+  ]
+}
+
 
 onMounted(() => {
   // Load Infomedia CSV
@@ -29,9 +45,7 @@ onMounted(() => {
     console.log("...documents data loaded.")
     loaded.value = true
     docsFiltered.value = Object.values(docs)
-    fuse = new Fuse(Object.values(docs), {
-      keys: ['heading', 'text']
-    })
+    fuse = new Fuse(Object.values(docs), fuseOptions)
   })
 })
 

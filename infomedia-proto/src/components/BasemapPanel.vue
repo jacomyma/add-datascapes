@@ -169,7 +169,7 @@ function updateBasemap() {
 
 	const sizeRatio = .2;
 	const highlightScale = function(count) {
-		return 3*Math.sqrt(Math.log(1 + count))
+		return .08 * Math.sqrt(Math.log(2 + 1000*(count-1)))
 	}
 
 	var Tooltip = d3.select("#basemap-tooltip")
@@ -227,7 +227,7 @@ function updateBasemap() {
 	  .append("circle")
 	    .attr("cx", function (d) { return x(d.x); } )
 	    .attr("cy", function (d) { return y(d.y); } )
-	    .attr("r", function (d) { return highlightScale(d.count) + 0.5*nodeMargin; })
+	    .attr("r", function (d) { return highlightScale(d.count)*d.size + 0.5*nodeMargin; })
 	    .style("fill", "#A12568")
 	    .on("mouseover", mouseover)
 	    .on("mousemove", mousemove)
@@ -241,7 +241,7 @@ function updateBasemap() {
 	  .append("circle")
 	    .attr("cx", function (d) { return x(d.x); } )
 	    .attr("cy", function (d) { return y(d.y); } )
-	    .attr("r", function (d) { return highlightScale(d.count); })
+	    .attr("r", function (d) { return highlightScale(d.count)*d.size; })
 	    .style("fill", "#FEC260")
 			.on("mouseover", mouseover)
 	    .on("mousemove", mousemove)
