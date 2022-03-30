@@ -157,9 +157,10 @@ function updateBasemap() {
     yPicRange[0] = yMean - 0.5 * (xPicRange[1] - xPicRange[0]);
     yPicRange[1] = yMean + 0.5 * (xPicRange[1] - xPicRange[0]);
   } else {
+    console.log("gogo")
     let xMean = 0.5 * (xPicRange[0] + xPicRange[1]);
     xPicRange[0] = xMean - 0.5 * (yPicRange[1] - yPicRange[0]);
-    xPicRange[1] = xMean + 0.5 * (yPicRange[1] - yRange[0]);
+    xPicRange[1] = xMean + 0.5 * (yPicRange[1] - yPicRange[0]);
   }
 
   // Add X axis
