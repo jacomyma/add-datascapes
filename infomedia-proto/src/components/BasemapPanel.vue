@@ -20,9 +20,25 @@
   </div>
 </template>
 
+<style>
+#basemap-container {
+  position: relative;
+  overflow: hidden;
+}
+.bgCanvas, .hlCanvas, .hiddenCanvas {
+  position: absolute;
+}
+.hiddenCanvas {
+  display: none;
+}
+</style>
+
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import * as d3 from "d3";
+import * as StackBlur from "stackblur-canvas"
+
+console.log("SB", StackBlur);
 
 const props = defineProps({
   docs: Array,
@@ -123,17 +139,31 @@ function updateBasemap() {
   const margin = { top: 0, right: 0, bottom: 0, left: 0 },
     width = containerWidth - margin.left - margin.right,
     height = containerHeight - margin.top - margin.bottom;
-  const nodeMargin = 8;
+  const nodeMargin = 4;
 
   // append the svg object to the body of the page
-  const svg = d3
+  /*const svg = d3
     .select("#basemap-container")
     .append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
     .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");*/
+  let bgCanvas = d3.select('#basemap-container')
+    .append('canvas')
+    .classed('bgCanvas', true)
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom);
+  let hlCanvas = d3.select('#basemap-container')
+    .append('canvas')
+    .classed('hlCanvas', true)
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom);
+  let hiddenCanvas = d3.select('#basemap-container')
+    .append('canvas')
+    .classed('hiddenCanvas', true)
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom);
   // Plot the data
 
   // Normalize ranges so that the two axes correspond (in the data)
@@ -157,7 +187,6 @@ function updateBasemap() {
     yPicRange[0] = yMean - 0.5 * (xPicRange[1] - xPicRange[0]);
     yPicRange[1] = yMean + 0.5 * (xPicRange[1] - xPicRange[0]);
   } else {
-    console.log("gogo")
     let xMean = 0.5 * (xPicRange[0] + xPicRange[1]);
     xPicRange[0] = xMean - 0.5 * (yPicRange[1] - yPicRange[0]);
     xPicRange[1] = xMean + 0.5 * (yPicRange[1] - yPicRange[0]);
@@ -174,9 +203,9 @@ function updateBasemap() {
   // svg.append("g")
   //   .call(d3.axisLeft(y));
 
-  const sizeRatio = 0.2;
+  const sizeRatio = 1;
   const highlightScale = function (count) {
-    return 0.08 * Math.sqrt(Math.log(2 + 1000 * (count - 1)));
+    return Math.sqrt(Math.log(5 + 500 * (count - 1)));
   };
 
   var Tooltip = d3.select("#basemap-tooltip");
@@ -196,7 +225,51 @@ function updateBasemap() {
     Tooltip.style("opacity", 0);
   };
 
-  // Background
+  // Test draw on Canvas
+  let bgCtx = bgCanvas.node().getContext('2d');
+  let hlCtx = hlCanvas.node().getContext('2d');
+  bgCtx.fillStyle = '#c0cbcd';
+  bgCtx.fillRect(0, 0, bgCtx.canvas.width, bgCtx.canvas.height);
+
+  // Add dots background
+  bgCtx.fillStyle = '#bfbda8';
+  data.forEach(d => {
+    bgCtx.beginPath();
+    bgCtx.arc(x(d.x), y(d.y), sizeRatio + nodeMargin, 0, 2*Math.PI);
+    bgCtx.fill();
+  })
+
+  // Add dots (non highlight)
+  bgCtx.fillStyle = '#acaa92';
+  data.forEach(d => {
+    bgCtx.beginPath();
+    bgCtx.arc(x(d.x), y(d.y), sizeRatio, 0, 2*Math.PI);
+    bgCtx.fill();
+  })
+
+  // Blur!
+  StackBlur.canvasRGB(bgCtx.canvas, 0, 0, bgCtx.canvas.width, bgCtx.canvas.height, bgCtx.canvas.width/128);
+
+  // Add dots (highlight halo)
+  hlCtx.fillStyle = '#dfddce';
+  data.forEach(d => {
+    hlCtx.beginPath();
+    hlCtx.arc(x(d.x), y(d.y), highlightScale(d.count) * sizeRatio + 2, 0, 2*Math.PI);
+    hlCtx.fill();
+  })
+
+  // Blur!
+  StackBlur.canvasRGBA(hlCtx.canvas, 0, 0, hlCtx.canvas.width, hlCtx.canvas.height, hlCtx.canvas.width/32);
+
+  // Add dots (highlight)
+  hlCtx.fillStyle = '#FFF';
+  data.forEach(d => {
+    hlCtx.beginPath();
+    hlCtx.arc(x(d.x), y(d.y), highlightScale(d.count) * sizeRatio, 0, 2*Math.PI);
+    hlCtx.fill();
+  })
+
+  /*// Background
   svg
     .append("g")
     .append("rect")
@@ -281,5 +354,6 @@ function updateBasemap() {
     .on("mouseover", mouseover)
     .on("mousemove", mousemove)
     .on("mouseleave", mouseleave);
+    */
 }
 </script>

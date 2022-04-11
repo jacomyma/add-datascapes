@@ -12,4 +12,5 @@ export default defineConfig({
     },
   },
   base: '/add-datascape/'
+  // base: '/gh/add-datascapes/infomedia-proto/dist/'
 });

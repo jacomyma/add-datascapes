@@ -1,4 +1,5 @@
 <script setup>
+import { Base64 } from 'js-base64';
 import Fuse from "fuse.js";
 import { onMounted, ref, reactive, watch } from "vue";
 import QueryField from "../components/QueryField.vue";
@@ -28,6 +29,44 @@ const fuseOptions = {
 };
 
 onMounted(() => {
+
+  
+  // const username = 'elastic'
+  // const password = 'VAjkVhee**R1CeCiW+rj'
+  // fetch("https://localhost:9200/", {
+  const username = 'elastic'
+  const password = '9pSJ5siACNtVAUwB2mj8'
+  fetch("http://10.92.0.111:9200/infomedia/_search/", {
+    "method": "POST",
+    "headers": {
+      "Content-type": "application/json; charset=UTF-8",
+      'Authorization': 'Basic ' + Base64.encode(username + ":" + password),
+    },
+    "body": JSON.stringify({
+      "track_total_hits": true,
+      "query": {
+        "match_all": {
+        }
+      }
+    })
+  })
+  .then(response => { 
+    if (response.ok) {
+      return response.json()
+    } else {
+      console.warn("/!\\ Server returned " + response.status + " : " + response.statusText);
+    }                
+  })
+  .then(response => {
+    console.log(response)
+  })
+  .catch(err => {
+    console.warn(err);
+  });
+  
+  
+
+  /*
   // Load Infomedia CSV
   console.log("Loading documents data...");
   d3.csv("/add-datascape/data/infomedia_raw.csv", (row) => {
@@ -45,6 +84,8 @@ onMounted(() => {
     docsFiltered.value = Object.values(docs);
     fuse = new Fuse(Object.values(docs), fuseOptions);
   });
+  */
+  
 });
 
 watch(query, (newQuery) => {
