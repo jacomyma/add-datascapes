@@ -1,54 +1,29 @@
 <script setup>
 import { Base64 } from 'js-base64';
-import Fuse from "fuse.js";
 import { onMounted, ref, reactive, watch } from "vue";
 import QueryField from "../components/QueryField.vue";
 import DocumentsPanel from "../components/DocumentsPanel.vue";
 import BasemapPanel from "../components/BasemapPanel.vue";
 import * as d3 from "d3";
 
-let docs = reactive({});
+// let docs = reactive({});
 let docsFiltered = ref([]);
 let loaded = ref(false);
 let query = ref("");
-let fuse;
-const fuseOptions = {
-  includeScore: true,
-  distance: 300,
-  threshold: 0.3,
-  keys: [
-    {
-      name: "heading",
-      weight: 2,
-    },
-    {
-      name: "text",
-      weight: 1,
-    },
-  ],
-};
 
-onMounted(() => {
-
-  
+const fetchES = function(route, params) {
   // const username = 'elastic'
   // const password = 'VAjkVhee**R1CeCiW+rj'
   // fetch("https://localhost:9200/", {
   const username = 'elastic'
   const password = '9pSJ5siACNtVAUwB2mj8'
-  fetch("http://10.92.0.111:9200/infomedia/_search/", {
+  return fetch("http://10.92.0.111:9200/"+route, {
     "method": "POST",
     "headers": {
       "Content-type": "application/json; charset=UTF-8",
       'Authorization': 'Basic ' + Base64.encode(username + ":" + password),
     },
-    "body": JSON.stringify({
-      "track_total_hits": true,
-      "query": {
-        "match_all": {
-        }
-      }
-    })
+    "body": JSON.stringify(params)
   })
   .then(response => { 
     if (response.ok) {
@@ -57,8 +32,23 @@ onMounted(() => {
       console.warn("/!\\ Server returned " + response.status + " : " + response.statusText);
     }                
   })
+}
+
+onMounted(() => {
+
+  fetchES("infomedia/_search/", {
+      "track_total_hits": true,
+      "from": 0,
+      "size": 10,
+      "query": {
+        "match_all": {
+        }
+      }
+    })
   .then(response => {
     console.log(response)
+    docsFiltered.value = response.hits.hits
+    loaded.value = true
   })
   .catch(err => {
     console.warn(err);
@@ -90,12 +80,12 @@ onMounted(() => {
 
 watch(query, (newQuery) => {
   if (newQuery && newQuery.length > 0) {
-    let results = fuse.search(query.value);
+    /*let results = fuse.search(query.value);
     docsFiltered.value = results.map((r) => {
       return r.item;
-    });
+    });*/
   } else {
-    docsFiltered.value = Object.values(docs);
+    // docsFiltered.value = Object.values(docs);
   }
 });
 </script>

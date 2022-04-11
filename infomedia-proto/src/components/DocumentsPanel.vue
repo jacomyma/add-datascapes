@@ -39,13 +39,13 @@ let articleDisplayCount = ref(50);
         v-for="doc in docs.filter((d, i) => i < articleDisplayCount)"
         class="card"
       >
-        <h2>{{ doc.heading }}</h2>
+        <h2>{{ doc._source.heading }}</h2>
         <div class="card-content" v-if="showText" style="white-space: pre-wrap">
-          {{ doc.text }}
+          {{ doc._source.full_text }}
         </div>
         <small
-          ><em>{{ doc.source }}</em> &nbsp;·&nbsp; {{ doc.date }} &nbsp;·&nbsp;
-          {{ doc.id }}
+          ><em>{{ doc._source.sourcename }}</em> &nbsp;·&nbsp; {{ doc._source.publishdate }} &nbsp;·&nbsp;
+          {{ doc._id }}
         </small>
       </div>
       <div
