@@ -7,9 +7,12 @@ import BasemapPanel from "../components/BasemapPanel.vue";
 import * as d3 from "d3";
 
 // let docs = reactive({});
-let docsFiltered = ref([]);
+let docsFetched = ref([]);
+let docsTotal = ref(0);
 let loaded = ref(false);
 let query = ref("");
+let docDisplayBatch = ref(3)//ref(25);
+let docDisplayCount = ref(0)
 
 const fetchES = function(route, params) {
   // const username = 'elastic'
@@ -34,12 +37,33 @@ const fetchES = function(route, params) {
   })
 }
 
-onMounted(() => {
+let loadBatch = ref(function() {
+  // Load one more batch
+  fetchES("infomedia/_search/", {
+      "from": docDisplayCount.value,
+      "size": docDisplayBatch.value,
+      "query": {
+        "match_all": { // TODO: What if different query???
+        }
+      }
+    })
+  .then(response => {
+    response.hits.hits.forEach(d => {
+      docsFetched.value.push(d)
+    })
+    docDisplayCount.value += docDisplayBatch.value
+  })
+  .catch(err => {
+    console.warn(err);
+  });
+})
 
+onMounted(() => {
+  docDisplayCount.value = 2*docDisplayBatch.value
   fetchES("infomedia/_search/", {
       "track_total_hits": true,
       "from": 0,
-      "size": 10,
+      "size": docDisplayCount.value,
       "query": {
         "match_all": {
         }
@@ -47,45 +71,24 @@ onMounted(() => {
     })
   .then(response => {
     console.log(response)
-    docsFiltered.value = response.hits.hits
+    docsFetched.value = response.hits.hits
     loaded.value = true
+    docsTotal.value = response.hits.total.value
   })
   .catch(err => {
     console.warn(err);
   });
-  
-  
-
-  /*
-  // Load Infomedia CSV
-  console.log("Loading documents data...");
-  d3.csv("/add-datascape/data/infomedia_raw.csv", (row) => {
-    let obj = {};
-    obj.id = row.duid;
-    obj.text = row.full_text;
-    obj.heading = row.heading;
-    obj.date = row.publishdate;
-    obj.source = row.sourcename;
-    obj.year = +row.year;
-    docs[obj.id] = obj;
-  }).then(() => {
-    console.log("...documents data loaded.");
-    loaded.value = true;
-    docsFiltered.value = Object.values(docs);
-    fuse = new Fuse(Object.values(docs), fuseOptions);
-  });
-  */
-  
+    
 });
 
 watch(query, (newQuery) => {
   if (newQuery && newQuery.length > 0) {
     /*let results = fuse.search(query.value);
-    docsFiltered.value = results.map((r) => {
+    docsFetched.value = results.map((r) => {
       return r.item;
     });*/
   } else {
-    // docsFiltered.value = Object.values(docs);
+    // docsFetched.value = Object.values(docs);
   }
 });
 </script>
@@ -105,7 +108,7 @@ watch(query, (newQuery) => {
         <queryField @query="(q) => (query = q)" />
       </div>
       <div style="background-color: #000; flex-grow: 1; display: flex">
-        <basemapPanel :docs="docsFiltered" :data-loaded="loaded" />
+        <basemapPanel :docs="docsFetched" :data-loaded="loaded" />
       </div>
     </div>
     <div
@@ -117,7 +120,7 @@ watch(query, (newQuery) => {
         justify-content: center;
       "
     >
-      <documentsPanel :docs="docsFiltered" :data-loaded="loaded" />
+      <documentsPanel :docs="docsFetched" :data-loaded="loaded" :docs-total="docsTotal" @loadBatch="loadBatch"/>
     </div>
   </main>
 </template>

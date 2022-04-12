@@ -2,14 +2,14 @@
 import { ref } from "vue";
 
 const props = defineProps({
+  docsTotal: Number,
   docs: Array,
   dataLoaded: Boolean,
+  loadBatch: Function,
 });
 
-const showText = ref(true);
+const showText = ref(false);
 
-let articleDisplayBatch = ref(25);
-let articleDisplayCount = ref(50);
 </script>
 
 <template>
@@ -33,10 +33,10 @@ let articleDisplayCount = ref(50);
         </fieldset>
       </form>
     </div>
-    <div style="padding: 6px">{{ docs.length }} documents</div>
+    <div style="padding: 6px">{{ Number(docsTotal).toLocaleString() }} documents</div>
     <div style="flex-grow: 1; overflow-y: auto">
       <div
-        v-for="doc in docs.filter((d, i) => i < articleDisplayCount)"
+        v-for="doc in docs"
         class="card"
       >
         <h2>{{ doc._source.heading }}</h2>
@@ -49,13 +49,13 @@ let articleDisplayCount = ref(50);
         </small>
       </div>
       <div
-        v-if="articleDisplayCount < docs.length"
+        v-if="docs.length < docsTotal"
         style="padding: 6px; text-align: center"
       >
         <button
           class="pure-button"
           style="font-size: 85%"
-          @click="articleDisplayCount += articleDisplayBatch"
+          @click="$emit('loadBatch')"
         >
           Load more...
         </button>
