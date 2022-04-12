@@ -11,7 +11,7 @@ let docsFetched = ref([]);
 let docsTotal = ref(0);
 let loaded = ref(false);
 let query = ref("");
-let docDisplayBatch = ref(3)//ref(25);
+let docDisplayBatch = ref(25);
 let docDisplayCount = ref(0)
 
 const fetchES = function(route, params) {
@@ -28,13 +28,51 @@ const fetchES = function(route, params) {
     },
     "body": JSON.stringify(params)
   })
-  .then(response => { 
+  .then(response => {
     if (response.ok) {
       return response.json()
     } else {
       console.warn("/!\\ Server returned " + response.status + " : " + response.statusText);
-    }                
+    }
   })
+}
+
+const buildQueryObject = function() {
+  if (query.value == "") {
+    // Match all
+    return {
+        "match_all": {
+        }
+      }
+  } else {
+    // Interpret the query field as a query_string
+    return {
+        "query_string": {
+          "query": query.value,
+          "default_field": "full_text"
+        }
+      }
+  }
+}
+
+const initQuery = function() {
+  console.log("Query:", buildQueryObject())
+  docDisplayCount.value = 2*docDisplayBatch.value
+  fetchES("infomedia/_search/", {
+      "track_total_hits": true,
+      "from": 0,
+      "size": docDisplayCount.value,
+      "query": buildQueryObject()
+    })
+  .then(response => {
+    console.log(response)
+    docsFetched.value = response.hits.hits
+    loaded.value = true
+    docsTotal.value = response.hits.total.value
+  })
+  .catch(err => {
+    console.warn(err);
+  });
 }
 
 let loadBatch = ref(function() {
@@ -42,10 +80,7 @@ let loadBatch = ref(function() {
   fetchES("infomedia/_search/", {
       "from": docDisplayCount.value,
       "size": docDisplayBatch.value,
-      "query": {
-        "match_all": { // TODO: What if different query???
-        }
-      }
+      "query": buildQueryObject()
     })
   .then(response => {
     response.hits.hits.forEach(d => {
@@ -58,38 +93,14 @@ let loadBatch = ref(function() {
   });
 })
 
+
+
 onMounted(() => {
-  docDisplayCount.value = 2*docDisplayBatch.value
-  fetchES("infomedia/_search/", {
-      "track_total_hits": true,
-      "from": 0,
-      "size": docDisplayCount.value,
-      "query": {
-        "match_all": {
-        }
-      }
-    })
-  .then(response => {
-    console.log(response)
-    docsFetched.value = response.hits.hits
-    loaded.value = true
-    docsTotal.value = response.hits.total.value
-  })
-  .catch(err => {
-    console.warn(err);
-  });
-    
+  initQuery()
 });
 
 watch(query, (newQuery) => {
-  if (newQuery && newQuery.length > 0) {
-    /*let results = fuse.search(query.value);
-    docsFetched.value = results.map((r) => {
-      return r.item;
-    });*/
-  } else {
-    // docsFetched.value = Object.values(docs);
-  }
+  initQuery()
 });
 </script>
 
