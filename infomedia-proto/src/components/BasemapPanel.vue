@@ -36,6 +36,7 @@ const props = defineProps({
 });
 
 const NECoordinates = ref({});
+let data
 
 onMounted(() => {
   console.log("Loading basemap data...");
@@ -47,6 +48,15 @@ onMounted(() => {
   }).then(() => {
     console.log("...basemap data loaded.");
     NECoordinates.value = _NECoordinates;
+
+    data = Object.values(NECoordinates.value).filter((d, i) => {
+      d.x = +d.x;
+      d.y = +d.y;
+      d.size = +d.size;
+      if (isNaN(d.x) || isNaN(d.y) || isNaN(d.size)) return false;
+      else return true;
+    });
+
     updateBasemap();
   });
 });
@@ -56,96 +66,18 @@ onUnmounted(() => {
   window.removeEventListener("resize", updateBasemap);
 });
 
-watch(() => props.dataLoaded, {
-  if (dataLoaded) {updateBasemap()}
-});
 watch(() => props.focusedEntities, updateBasemap);
 
 function updateBasemap() {
   console.log("Update basemap. Entities:", (props.focusedEntities || []).length);
 
   updateBackground()
+  updateHighlight()
 
-  // return
+  return
+
   
-  // Get data
-  let neIndex = {};
-  props.focusedEntities.forEach((entity) => {
-    neIndex[entity.toLowerCase()] = true
-  });
-  
-  const data = Object.values(NECoordinates.value).filter((d, i) => {
-    d.x = +d.x;
-    d.y = +d.y;
-    d.size = +d.size;
-    if (isNaN(d.x) || isNaN(d.y) || isNaN(d.size)) return false;
-    let ne = d["Id"];
-    d.highlight = !!neIndex[d.Id];
-    return true;
-  });
-
-  // Get size
-  const containerWidth =
-    document.getElementById("basemap-container").offsetWidth;
-  const containerHeight =
-    document.getElementById("basemap-container").offsetHeight;
-
-  // set the dimensions and margins of the graph
-  const margin = { top: 0, right: 0, bottom: 0, left: 0 },
-    width = containerWidth - margin.left - margin.right,
-    height = containerHeight - margin.top - margin.bottom;
-  const nodeMargin = 4;
-
-  let bgCanvas = d3.select('#basemap-container canvas.bgCanvas')
-    .attr('width', width + margin.left + margin.right)
-    .attr('height', height + margin.top + margin.bottom);
-  let hlCanvas = d3.select('#basemap-container canvas.hlCanvas')
-    .attr('width', width + margin.left + margin.right)
-    .attr('height', height + margin.top + margin.bottom);
-  let hiddenCanvas = d3.select('#basemap-container canvas.hiddenCanvas')
-    .attr('width', width + margin.left + margin.right)
-    .attr('height', height + margin.top + margin.bottom);
-
-  console.log("BG CANVAS", bgCanvas)
-
-
-  // Plot the data
-
-  // Normalize ranges so that the two axes correspond (in the data)
-  var xRange = d3.extent(data, (d) => d.x);
-  var yRange = d3.extent(data, (d) => d.y);
-  if (xRange[1] - xRange[0] > yRange[1] - yRange[0]) {
-    let yMean = 0.5 * (yRange[0] + yRange[1]);
-    yRange[0] = yMean - 0.5 * (xRange[1] - xRange[0]);
-    yRange[1] = yMean + 0.5 * (xRange[1] - xRange[0]);
-  } else {
-    let xMean = 0.5 * (xRange[0] + xRange[1]);
-    xRange[0] = xMean - 0.5 * (yRange[1] - yRange[0]);
-    xRange[1] = xMean + 0.5 * (yRange[1] - yRange[0]);
-  }
-
-  // Normalize ranges so that the two axes correspond (in the picture)
-  var xPicRange = [3 * nodeMargin, width - 3 * nodeMargin];
-  var yPicRange = [3 * nodeMargin, height - 3 * nodeMargin];
-  if (xPicRange[1] - xPicRange[0] < yPicRange[1] - yPicRange[0]) {
-    let yMean = 0.5 * (yPicRange[0] + yPicRange[1]);
-    yPicRange[0] = yMean - 0.5 * (xPicRange[1] - xPicRange[0]);
-    yPicRange[1] = yMean + 0.5 * (xPicRange[1] - xPicRange[0]);
-  } else {
-    let xMean = 0.5 * (xPicRange[0] + xPicRange[1]);
-    xPicRange[0] = xMean - 0.5 * (yPicRange[1] - yPicRange[0]);
-    xPicRange[1] = xMean + 0.5 * (yPicRange[1] - yPicRange[0]);
-  }
-
-  // Add X axis
-  var x = d3.scaleLinear().domain(xRange).range(xPicRange);
-
-  // Add Y axis
-  var y = d3.scaleLinear().domain(yRange).range([yPicRange[1], yPicRange[0]]);
-
-  const sizeRatio = 1;
-  
-  var Tooltip = d3.select("#basemap-tooltip");
+  // var Tooltip = d3.select("#basemap-tooltip");
 
   // Three function that change the tooltip when user hover / move / leave a cell
   // TODO: make it work on Canvas
@@ -162,31 +94,38 @@ function updateBasemap() {
   var mouseleave = function (e, d) {
     Tooltip.style("opacity", 0);
   };*/
+}
 
-  // Test draw on Canvas
-  let bgCtx = bgCanvas.node().getContext('2d');
+function updateHighlight() {
+  // Get data
+  let neIndex = {};
+  props.focusedEntities.forEach((entity) => {
+    neIndex[entity.toLowerCase()] = true
+  });
+
+  data.forEach((d, i) => {
+    let ne = d["Id"];
+    d.highlight = !!neIndex[d.Id];
+    return true;
+  });
+
+  const sizing = getSizing();
+  const margin = sizing.margin;
+  const width = sizing.width;
+  const height = sizing.height;
+  const nodeMargin = sizing.nodeMargin;
+  const x = sizing.x;
+  const y = sizing.y;
+  const sizeRatio = sizing.sizeRatio;
+
+  let hlCanvas = d3.select('#basemap-container canvas.hlCanvas')
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom);
+  let hiddenCanvas = d3.select('#basemap-container canvas.hiddenCanvas')
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom);
+
   let hlCtx = hlCanvas.node().getContext('2d');
-  bgCtx.fillStyle = '#c0cbcd';
-  bgCtx.fillRect(0, 0, bgCtx.canvas.width, bgCtx.canvas.height);
-
-  // Add dots background
-  bgCtx.fillStyle = '#bfbda8';
-  data.forEach(d => {
-    bgCtx.beginPath();
-    bgCtx.arc(x(d.x), y(d.y), sizeRatio*d.size + nodeMargin, 0, 2*Math.PI);
-    bgCtx.fill();
-  })
-
-  // Add dots (non highlight)
-  bgCtx.fillStyle = '#acaa92';
-  data.forEach(d => {
-    bgCtx.beginPath();
-    bgCtx.arc(x(d.x), y(d.y), sizeRatio*d.size, 0, 2*Math.PI);
-    bgCtx.fill();
-  })
-
-  // Blur!
-  StackBlur.canvasRGB(bgCtx.canvas, 0, 0, bgCtx.canvas.width, bgCtx.canvas.height, bgCtx.canvas.width/128);
 
   // Add dots (highlight halo)
   hlCtx.fillStyle = '#dfddce';
@@ -210,11 +149,98 @@ function updateBasemap() {
     hlCtx.arc(x(d.x), y(d.y), sizeRatio*d.size, 0, 2*Math.PI);
     hlCtx.fill();
   })
+
 }
 
 function updateBackground() {
+  const sizing = getSizing();
+  const margin = sizing.margin;
+  const width = sizing.width;
+  const height = sizing.height;
+  const nodeMargin = sizing.nodeMargin;
+  const x = sizing.x;
+  const y = sizing.y;
+  const sizeRatio = sizing.sizeRatio;
 
+  let bgCanvas = d3.select('#basemap-container canvas.bgCanvas')
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom);
+
+  let bgCtx = bgCanvas.node().getContext('2d');
+  bgCtx.fillStyle = '#c0cbcd';
+  bgCtx.fillRect(0, 0, bgCtx.canvas.width, bgCtx.canvas.height);
+
+  // Add dots background
+  bgCtx.fillStyle = '#bfbda8';
+  data.forEach(d => {
+    bgCtx.beginPath();
+    bgCtx.arc(x(d.x), y(d.y), sizeRatio*d.size + nodeMargin, 0, 2*Math.PI);
+    bgCtx.fill();
+  })
+
+  // Add dots (non highlight)
+  bgCtx.fillStyle = '#acaa92';
+  data.forEach(d => {
+    bgCtx.beginPath();
+    bgCtx.arc(x(d.x), y(d.y), sizeRatio*d.size, 0, 2*Math.PI);
+    bgCtx.fill();
+  })
+
+  // Blur!
+  StackBlur.canvasRGB(bgCtx.canvas, 0, 0, bgCtx.canvas.width, bgCtx.canvas.height, bgCtx.canvas.width/128);
 }
 
+function getSizing() {
+  let ns = {}
+
+  // Get size
+  const containerWidth =
+    document.getElementById("basemap-container").offsetWidth;
+  const containerHeight =
+    document.getElementById("basemap-container").offsetHeight;
+
+  // set the dimensions and margins of the graph
+  ns.margin = { top: 0, right: 0, bottom: 0, left: 0 };
+  ns.width = containerWidth - ns.margin.left - ns.margin.right;
+  ns.height = containerHeight - ns.margin.top - ns.margin.bottom;
+  ns.nodeMargin = 4;
+
+
+  // Normalize ranges so that the two axes correspond (in the data)
+  var xRange = d3.extent(data, (d) => d.x);
+  var yRange = d3.extent(data, (d) => d.y);
+  if (xRange[1] - xRange[0] > yRange[1] - yRange[0]) {
+    let yMean = 0.5 * (yRange[0] + yRange[1]);
+    yRange[0] = yMean - 0.5 * (xRange[1] - xRange[0]);
+    yRange[1] = yMean + 0.5 * (xRange[1] - xRange[0]);
+  } else {
+    let xMean = 0.5 * (xRange[0] + xRange[1]);
+    xRange[0] = xMean - 0.5 * (yRange[1] - yRange[0]);
+    xRange[1] = xMean + 0.5 * (yRange[1] - yRange[0]);
+  }
+
+  // Normalize ranges so that the two axes correspond (in the picture)
+  var xPicRange = [3 * ns.nodeMargin, ns.width - 3 * ns.nodeMargin];
+  var yPicRange = [3 * ns.nodeMargin, ns.height - 3 * ns.nodeMargin];
+  if (xPicRange[1] - xPicRange[0] < yPicRange[1] - yPicRange[0]) {
+    let yMean = 0.5 * (yPicRange[0] + yPicRange[1]);
+    yPicRange[0] = yMean - 0.5 * (xPicRange[1] - xPicRange[0]);
+    yPicRange[1] = yMean + 0.5 * (xPicRange[1] - xPicRange[0]);
+  } else {
+    let xMean = 0.5 * (xPicRange[0] + xPicRange[1]);
+    xPicRange[0] = xMean - 0.5 * (yPicRange[1] - yPicRange[0]);
+    xPicRange[1] = xMean + 0.5 * (yPicRange[1] - yPicRange[0]);
+  }
+
+  // Add X axis
+  ns.x = d3.scaleLinear().domain(xRange).range(xPicRange);
+
+  // Add Y axis
+  ns.y = d3.scaleLinear().domain(yRange).range([yPicRange[1], yPicRange[0]]);
+
+  ns.sizeRatio = 1;
+
+  return ns
+}
 
 </script>
