@@ -1,21 +1,14 @@
 <template>
-  <div
-    v-if="!dataLoaded"
-    style="
-      flex-grow: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    "
-  >
-    <div>Loading...</div>
-  </div>
-  <div v-else style="flex-grow: 1; display: flex; position: relative">
+  <div style="flex-grow: 1; display: flex; position: relative">
     <div
       style="flex-grow: 1"
       id="basemap-container"
       onresize="updateBasemap()"
-    ></div>
+    >
+      <canvas class="bgCanvas"></canvas>
+      <canvas class="hlCanvas"></canvas>
+      <canvas class="hiddenCanvas"></canvas>
+    </div>
     <div id="basemap-tooltip"></div>
   </div>
 </template>
@@ -38,11 +31,8 @@ import { ref, onMounted, onUnmounted, watch } from "vue";
 import * as d3 from "d3";
 import * as StackBlur from "stackblur-canvas"
 
-console.log("SB", StackBlur);
-
 const props = defineProps({
-  docs: Array,
-  dataLoaded: Boolean,
+  focusedEntities: Array
 });
 
 const NECoordinates = ref({});
@@ -51,7 +41,8 @@ onMounted(() => {
   console.log("Loading basemap data...");
   let _NECoordinates = {};
   d3.csv("/add-datascape/data/infomedia basemap.csv", (row) => {
-    let ne = row["Id"];
+    row["Id"] = row["Id"].toLowerCase();
+    let ne = row["Id"]
     _NECoordinates[ne] = row;
   }).then(() => {
     console.log("...basemap data loaded.");
@@ -65,37 +56,31 @@ onUnmounted(() => {
   window.removeEventListener("resize", updateBasemap);
 });
 
-watch(() => props.docs, updateBasemap);
+watch(() => props.dataLoaded, {
+  if (dataLoaded) {updateBasemap()}
+});
+watch(() => props.focusedEntities, updateBasemap);
 
 function updateBasemap() {
-  console.log("Update basemap. Documents:", (props.docs || []).length);
+  console.log("Update basemap. Entities:", (props.focusedEntities || []).length);
 
-  if (!document.getElementById("basemap-container")) {
-    return;
-  }
+  updateBackground()
 
-  // Delete existing vis
-  document.getElementById("basemap-container").innerHTML = "";
-
+  // return
+  
   // Get data
-  let docList = props.docs.map((d) => d.id);
-  console.log("Compute index...");
-  // Aggregate the named entities of those documents
   let neIndex = {};
-  docList.forEach((id) => {
-    /*let neList = NEByDocument.value[id] || [];
-    neList.forEach((ne) => {
-      neIndex[ne] = (neIndex[ne] || 0) + 1;
-    });*/
+  props.focusedEntities.forEach((entity) => {
+    neIndex[entity.toLowerCase()] = true
   });
-  console.log("...done.");
+  
   const data = Object.values(NECoordinates.value).filter((d, i) => {
     d.x = +d.x;
     d.y = +d.y;
     d.size = +d.size;
     if (isNaN(d.x) || isNaN(d.y) || isNaN(d.size)) return false;
     let ne = d["Id"];
-    d.count = neIndex[ne] || 0;
+    d.highlight = !!neIndex[d.Id];
     return true;
   });
 
@@ -111,21 +96,19 @@ function updateBasemap() {
     height = containerHeight - margin.top - margin.bottom;
   const nodeMargin = 4;
 
-  let bgCanvas = d3.select('#basemap-container')
-    .append('canvas')
-    .classed('bgCanvas', true)
+  let bgCanvas = d3.select('#basemap-container canvas.bgCanvas')
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom);
-  let hlCanvas = d3.select('#basemap-container')
-    .append('canvas')
-    .classed('hlCanvas', true)
+  let hlCanvas = d3.select('#basemap-container canvas.hlCanvas')
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom);
-  let hiddenCanvas = d3.select('#basemap-container')
-    .append('canvas')
-    .classed('hiddenCanvas', true)
+  let hiddenCanvas = d3.select('#basemap-container canvas.hiddenCanvas')
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom);
+
+  console.log("BG CANVAS", bgCanvas)
+
+
   // Plot the data
 
   // Normalize ranges so that the two axes correspond (in the data)
@@ -161,14 +144,12 @@ function updateBasemap() {
   var y = d3.scaleLinear().domain(yRange).range([yPicRange[1], yPicRange[0]]);
 
   const sizeRatio = 1;
-  const highlightScale = function (count) {
-    return Math.sqrt(Math.log(5 + 500 * (count - 1)));
-  };
-
+  
   var Tooltip = d3.select("#basemap-tooltip");
 
   // Three function that change the tooltip when user hover / move / leave a cell
-  var mouseover = function (e, d) {
+  // TODO: make it work on Canvas
+  /*var mouseover = function (e, d) {
     Tooltip.style("opacity", 1);
   };
   var mousemove = function (e, d) {
@@ -180,7 +161,7 @@ function updateBasemap() {
   };
   var mouseleave = function (e, d) {
     Tooltip.style("opacity", 0);
-  };
+  };*/
 
   // Test draw on Canvas
   let bgCtx = bgCanvas.node().getContext('2d');
@@ -192,7 +173,7 @@ function updateBasemap() {
   bgCtx.fillStyle = '#bfbda8';
   data.forEach(d => {
     bgCtx.beginPath();
-    bgCtx.arc(x(d.x), y(d.y), sizeRatio + nodeMargin, 0, 2*Math.PI);
+    bgCtx.arc(x(d.x), y(d.y), sizeRatio*d.size + nodeMargin, 0, 2*Math.PI);
     bgCtx.fill();
   })
 
@@ -200,7 +181,7 @@ function updateBasemap() {
   bgCtx.fillStyle = '#acaa92';
   data.forEach(d => {
     bgCtx.beginPath();
-    bgCtx.arc(x(d.x), y(d.y), sizeRatio, 0, 2*Math.PI);
+    bgCtx.arc(x(d.x), y(d.y), sizeRatio*d.size, 0, 2*Math.PI);
     bgCtx.fill();
   })
 
@@ -209,9 +190,11 @@ function updateBasemap() {
 
   // Add dots (highlight halo)
   hlCtx.fillStyle = '#dfddce';
-  data.forEach(d => {
+  data
+  .filter(d => d.highlight)
+  .forEach(d => {
     hlCtx.beginPath();
-    hlCtx.arc(x(d.x), y(d.y), highlightScale(d.count) * sizeRatio + 2, 0, 2*Math.PI);
+    hlCtx.arc(x(d.x), y(d.y), sizeRatio*d.size + 2, 0, 2*Math.PI);
     hlCtx.fill();
   })
 
@@ -220,10 +203,18 @@ function updateBasemap() {
 
   // Add dots (highlight)
   hlCtx.fillStyle = '#FFF';
-  data.forEach(d => {
+  data
+  .filter(d => d.highlight)
+  .forEach(d => {
     hlCtx.beginPath();
-    hlCtx.arc(x(d.x), y(d.y), highlightScale(d.count) * sizeRatio, 0, 2*Math.PI);
+    hlCtx.arc(x(d.x), y(d.y), sizeRatio*d.size, 0, 2*Math.PI);
     hlCtx.fill();
   })
 }
+
+function updateBackground() {
+
+}
+
+
 </script>

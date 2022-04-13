@@ -19,11 +19,9 @@ let emitDoc = ref(function(doc) {
   } else {
     emit('focusedEntities', [])
   }
-  console.log("hh")
 })
 
 let emitEntity = ref(function(entity) {
-  // console.log("Emit entity", entity)
   emit('focusedEntities', [entity])
 })
 
@@ -31,6 +29,22 @@ let emitEntity = ref(function(entity) {
 
 <style>
 .card:hover {
+  cursor: pointer;
+}
+.pill-box {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 6px;
+}
+.entity-pill {
+  border-radius: 12px;
+  min-width: 24px;
+  min-height: 24px;
+  background-color: rgba(255,255,255,0.1);
+  padding: 1px 12px;
+  font-family: sans-serif;
   cursor: pointer;
 }
 </style>
@@ -70,13 +84,13 @@ let emitEntity = ref(function(entity) {
         <div class="card-content" v-if="showText" style="white-space: pre-wrap">
           {{ doc._source.full_text }}
         </div>
-        <div class="card-content" v-if="showEntities" style="white-space: pre-wrap">
-          <strong v-if="showText">Named entities: </strong>
-          <span
+        <div v-if="showEntities" class="pill-box">
+          <div
+            class="entity-pill"
             v-for="entity in doc._source.entities"
             @mouseenter="emitEntity(entity)"
             @mouseleave="emitDoc(doc)"
-          >{{ entity }}</span>
+          >{{ entity }}</div>
         </div>
         <small
           ><em>{{ doc._source.sourcename }}</em> &nbsp;·&nbsp; {{ doc._source.publishdate }} &nbsp;·&nbsp;

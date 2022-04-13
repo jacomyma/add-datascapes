@@ -120,7 +120,7 @@ watch(query, (newQuery) => {
         <queryField @query="(q) => (query = q)" />
       </div>
       <div style="background-color: #000; flex-grow: 1; display: flex">
-        <basemapPanel :docs="docsFetched" :data-loaded="loaded" :focused-entities="focusedEntities"/>
+        <basemapPanel :focused-entities="focusedEntities"/>
       </div>
     </div>
     <div
