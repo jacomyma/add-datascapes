@@ -8,9 +8,32 @@ const props = defineProps({
   loadBatch: Function,
 });
 
+const emit = defineEmits(['focusedEntities'])
+
 const showText = ref(false);
+const showEntities = ref(true);
+
+let emitDoc = ref(function(doc) {
+  if (doc && doc._source && doc._source.entities) {
+    emit('focusedEntities', doc._source.entities)
+  } else {
+    emit('focusedEntities', [])
+  }
+  console.log("hh")
+})
+
+let emitEntity = ref(function(entity) {
+  // console.log("Emit entity", entity)
+  emit('focusedEntities', [entity])
+})
 
 </script>
+
+<style>
+.card:hover {
+  cursor: pointer;
+}
+</style>
 
 <template>
   <div v-if="!dataLoaded" style="text-align: center">Loading...</div>
@@ -26,9 +49,11 @@ const showText = ref(false);
     <div style="padding: 6px">
       <form class="pure-form">
         <fieldset>
-          <label for="headline-only">
-            <input type="checkbox" id="headline-only" v-model="showText" /> Show
-            text
+          <label for="show-text" style="padding: 6px">
+            <input type="checkbox" id="show-text" v-model="showText" /> Show text
+          </label>
+          <label for="show-entities">
+            <input type="checkbox" id="show-entities" v-model="showEntities" /> Show named entities
           </label>
         </fieldset>
       </form>
@@ -37,11 +62,21 @@ const showText = ref(false);
     <div style="flex-grow: 1; overflow-y: auto">
       <div
         v-for="doc in docs"
+        @mouseenter="emitDoc(doc)"
+        @mouseleave="emitDoc()"
         class="card"
       >
         <h2>{{ doc._source.heading }}</h2>
         <div class="card-content" v-if="showText" style="white-space: pre-wrap">
           {{ doc._source.full_text }}
+        </div>
+        <div class="card-content" v-if="showEntities" style="white-space: pre-wrap">
+          <strong v-if="showText">Named entities: </strong>
+          <span
+            v-for="entity in doc._source.entities"
+            @mouseenter="emitEntity(entity)"
+            @mouseleave="emitDoc(doc)"
+          >{{ entity }}</span>
         </div>
         <small
           ><em>{{ doc._source.sourcename }}</em> &nbsp;·&nbsp; {{ doc._source.publishdate }} &nbsp;·&nbsp;

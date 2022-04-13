@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="!dataLoaded || !data2Loaded"
+    v-if="!dataLoaded"
     style="
       flex-grow: 1;
       display: flex;
@@ -45,49 +45,19 @@ const props = defineProps({
   dataLoaded: Boolean,
 });
 
-const documentsByNE = ref({});
-const NEByDocument = ref({});
 const NECoordinates = ref({});
-const data2Loaded = ref(false);
 
 onMounted(() => {
-  // Add event listener
-  window.addEventListener("resize", updateBasemap);
-  // Load Infomedia CSV
-  console.log("Loading named entities data...");
-  let _documentsByNE = {};
-  let _NEByDocument = {};
-  d3.csv("/add-datascape/data/infomedia_docid_NER.csv", (row) => {
-    const doc = row.duid;
-    const NEList = row[0].split("|");
-    _NEByDocument[doc] = NEList;
-    NEList.forEach((ne) => {
-      if (_documentsByNE[ne] === undefined) {
-        _documentsByNE[ne] = [];
-      }
-      _documentsByNE[ne].push(doc);
-    });
-  })
-    .then(() => {
-      console.log("...named entities data loaded.");
-      documentsByNE.value = _documentsByNE;
-      NEByDocument.value = _NEByDocument;
-      data2Loaded.value = true;
-    })
-    .then(() => {
-      console.log("Loading basemap data...");
-      let _NECoordinates = {};
-      d3.csv("/add-datascape/data/NE basemap.csv", (row) => {
-        let ne = row["named entity"];
-        if (_documentsByNE[ne] != undefined) {
-          _NECoordinates[ne] = row;
-        }
-      }).then(() => {
-        console.log("...basemap data loaded.");
-        NECoordinates.value = _NECoordinates;
-        updateBasemap();
-      });
-    });
+  console.log("Loading basemap data...");
+  let _NECoordinates = {};
+  d3.csv("/add-datascape/data/infomedia basemap.csv", (row) => {
+    let ne = row["Id"];
+    _NECoordinates[ne] = row;
+  }).then(() => {
+    console.log("...basemap data loaded.");
+    NECoordinates.value = _NECoordinates;
+    updateBasemap();
+  });
 });
 
 onUnmounted(() => {
@@ -113,10 +83,10 @@ function updateBasemap() {
   // Aggregate the named entities of those documents
   let neIndex = {};
   docList.forEach((id) => {
-    let neList = NEByDocument.value[id] || [];
+    /*let neList = NEByDocument.value[id] || [];
     neList.forEach((ne) => {
       neIndex[ne] = (neIndex[ne] || 0) + 1;
-    });
+    });*/
   });
   console.log("...done.");
   const data = Object.values(NECoordinates.value).filter((d, i) => {
@@ -124,7 +94,7 @@ function updateBasemap() {
     d.y = +d.y;
     d.size = +d.size;
     if (isNaN(d.x) || isNaN(d.y) || isNaN(d.size)) return false;
-    let ne = d["named entity"];
+    let ne = d["Id"];
     d.count = neIndex[ne] || 0;
     return true;
   });
@@ -141,14 +111,6 @@ function updateBasemap() {
     height = containerHeight - margin.top - margin.bottom;
   const nodeMargin = 4;
 
-  // append the svg object to the body of the page
-  /*const svg = d3
-    .select("#basemap-container")
-    .append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");*/
   let bgCanvas = d3.select('#basemap-container')
     .append('canvas')
     .classed('bgCanvas', true)
@@ -194,14 +156,9 @@ function updateBasemap() {
 
   // Add X axis
   var x = d3.scaleLinear().domain(xRange).range(xPicRange);
-  // svg.append("g")
-  //   .attr("transform", "translate(0," + height + ")")
-  //   .call(d3.axisBottom(x));
 
   // Add Y axis
   var y = d3.scaleLinear().domain(yRange).range([yPicRange[1], yPicRange[0]]);
-  // svg.append("g")
-  //   .call(d3.axisLeft(y));
 
   const sizeRatio = 1;
   const highlightScale = function (count) {
@@ -268,92 +225,5 @@ function updateBasemap() {
     hlCtx.arc(x(d.x), y(d.y), highlightScale(d.count) * sizeRatio, 0, 2*Math.PI);
     hlCtx.fill();
   })
-
-  /*// Background
-  svg
-    .append("g")
-    .append("rect")
-    .attr("width", width)
-    .attr("height", height)
-    .style("fill", "#c0cbcd");
-
-  // Add dots background
-  svg
-    .append("g")
-    .selectAll("dot")
-    .data(data)
-    .enter()
-    .append("circle")
-    .attr("cx", function (d) {
-      return x(d.x);
-    })
-    .attr("cy", function (d) {
-      return y(d.y);
-    })
-    .attr("r", function (d) {
-      return sizeRatio * d.size + nodeMargin;
-    })
-    .style("fill", "#bfbda8");
-
-  // Add dots (non highlight)
-  svg
-    .append("g")
-    .selectAll("dot")
-    .data(data)
-    .enter()
-    .append("circle")
-    .attr("cx", function (d) {
-      return x(d.x);
-    })
-    .attr("cy", function (d) {
-      return y(d.y);
-    })
-    .attr("r", function (d) {
-      return sizeRatio * d.size;
-    })
-    .style("fill", "#acaa92");
-
-  // Add dots (highlight halo)
-  svg
-    .append("g")
-    .selectAll("dot")
-    .data(data.filter((d) => d.count > 0))
-    .enter()
-    .append("circle")
-    .attr("cx", function (d) {
-      return x(d.x);
-    })
-    .attr("cy", function (d) {
-      return y(d.y);
-    })
-    .attr("r", function (d) {
-      return highlightScale(d.count) * d.size + 0.5 * nodeMargin;
-    })
-    .style("fill", "#dfddce")
-    .on("mouseover", mouseover)
-    .on("mousemove", mousemove)
-    .on("mouseleave", mouseleave);
-
-  // Add dots (highlight)
-  svg
-    .append("g")
-    .selectAll("dot")
-    .data(data.filter((d) => d.count > 0))
-    .enter()
-    .append("circle")
-    .attr("cx", function (d) {
-      return x(d.x);
-    })
-    .attr("cy", function (d) {
-      return y(d.y);
-    })
-    .attr("r", function (d) {
-      return highlightScale(d.count) * d.size;
-    })
-    .style("fill", "#303040")
-    .on("mouseover", mouseover)
-    .on("mousemove", mousemove)
-    .on("mouseleave", mouseleave);
-    */
 }
 </script>

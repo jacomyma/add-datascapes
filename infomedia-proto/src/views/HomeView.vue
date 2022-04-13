@@ -13,6 +13,7 @@ let loaded = ref(false);
 let query = ref("");
 let docDisplayBatch = ref(25);
 let docDisplayCount = ref(0)
+let focusedEntities = ref([])
 
 const fetchES = function(route, params) {
   // const username = 'elastic'
@@ -119,7 +120,7 @@ watch(query, (newQuery) => {
         <queryField @query="(q) => (query = q)" />
       </div>
       <div style="background-color: #000; flex-grow: 1; display: flex">
-        <basemapPanel :docs="docsFetched" :data-loaded="loaded" />
+        <basemapPanel :docs="docsFetched" :data-loaded="loaded" :focused-entities="focusedEntities"/>
       </div>
     </div>
     <div
@@ -131,7 +132,7 @@ watch(query, (newQuery) => {
         justify-content: center;
       "
     >
-      <documentsPanel :docs="docsFetched" :data-loaded="loaded" :docs-total="docsTotal" @loadBatch="loadBatch"/>
+      <documentsPanel :docs="docsFetched" :data-loaded="loaded" :docs-total="docsTotal" @loadBatch="loadBatch" @focusedEntities="(fe) => focusedEntities = fe"/>
     </div>
   </main>
 </template>
