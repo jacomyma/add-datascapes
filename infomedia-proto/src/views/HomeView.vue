@@ -8,6 +8,7 @@ import * as d3 from "d3";
 
 // let docs = reactive({});
 let docsFetched = ref([]);
+let entitiesFetched = ref([]);
 let docsTotal = ref(0);
 let loaded = ref(false);
 let query = ref("");
@@ -63,13 +64,25 @@ const initQuery = function() {
       "track_total_hits": true,
       "from": 0,
       "size": docDisplayCount.value,
-      "query": buildQueryObject()
+      "query": buildQueryObject(),
+      "aggs": {
+        "entities-agg": {
+          "terms": {
+            "size": 100,
+            "field": "entities"
+          }
+        }
+      }
     })
   .then(response => {
     console.log(response)
     docsFetched.value = response.hits.hits
+    if (response.aggregations && response.aggregations['entities-agg'] && response.aggregations['entities-agg'].buckets) {
+      entitiesFetched.value = response.aggregations['entities-agg'].buckets
+    }
     loaded.value = true
     docsTotal.value = response.hits.total.value
+    highlightEntities.value()
   })
   .catch(err => {
     console.warn(err);
@@ -94,7 +107,18 @@ let loadBatch = ref(function() {
   });
 })
 
-
+let highlightEntities = ref(function(hoveredEntities) {
+  if (hoveredEntities && hoveredEntities.length > 0) {
+    focusedEntities.value = hoveredEntities
+  } else {
+    if (query.value == "") {
+      focusedEntities.value = []
+    } else {
+      focusedEntities.value = entitiesFetched.value.map(d => d.key)
+      
+    }
+  }
+})
 
 onMounted(() => {
   initQuery()
@@ -132,7 +156,7 @@ watch(query, (newQuery) => {
         justify-content: center;
       "
     >
-      <documentsPanel :docs="docsFetched" :data-loaded="loaded" :docs-total="docsTotal" @loadBatch="loadBatch" @focusedEntities="(fe) => focusedEntities = fe"/>
+      <documentsPanel :docs="docsFetched" :data-loaded="loaded" :docs-total="docsTotal" @loadBatch="loadBatch" @focusedEntities="highlightEntities"/>
     </div>
   </main>
 </template>
