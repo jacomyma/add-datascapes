@@ -3,7 +3,6 @@
     <div
       style="flex-grow: 1"
       id="basemap-container"
-      onresize="updateBasemap()"
     >
       <canvas class="bgCanvas"></canvas><!-- Background -->
       <canvas class="hlCanvas"></canvas><!-- Highlights -->
@@ -58,7 +57,7 @@ onMounted(() => {
       if (isNaN(d.x) || isNaN(d.y) || isNaN(d.size)) return false;
       else return true;
     });
-
+    window.addEventListener("resize", updateBasemap);
     updateBasemap();
   });
 });
