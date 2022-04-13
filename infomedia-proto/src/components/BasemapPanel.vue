@@ -5,8 +5,10 @@
       id="basemap-container"
       onresize="updateBasemap()"
     >
-      <canvas class="bgCanvas"></canvas>
-      <canvas class="hlCanvas"></canvas>
+      <canvas class="bgCanvas"></canvas><!-- Background -->
+      <canvas class="hlCanvas"></canvas><!-- Highlights -->
+      <canvas class="lbCanvas"></canvas><!-- Label blocks -->
+      <canvas class="lCanvas"></canvas><!-- Labels -->
       <canvas class="hiddenCanvas"></canvas>
     </div>
     <div id="basemap-tooltip"></div>
@@ -18,10 +20,10 @@
   position: relative;
   overflow: hidden;
 }
-.bgCanvas, .hlCanvas, .hiddenCanvas {
+.bgCanvas, .hlCanvas, .hiddenCanvas, .lCanvas, .lbCanvas {
   position: absolute;
 }
-.hiddenCanvas {
+.hiddenCanvas, .lbCanvas {
   display: none;
 }
 </style>
@@ -66,7 +68,7 @@ onUnmounted(() => {
   window.removeEventListener("resize", updateBasemap);
 });
 
-watch(() => props.focusedEntities, updateBasemap);
+watch(() => props.focusedEntities, updateHighlight);
 
 function updateBasemap() {
   console.log("Update basemap. Entities:", (props.focusedEntities || []).length);
@@ -97,6 +99,8 @@ function updateBasemap() {
 }
 
 function updateHighlight() {
+  console.log("Update highlights")
+
   // Get data
   let neIndex = {};
   props.focusedEntities.forEach((entity) => {
@@ -106,8 +110,9 @@ function updateHighlight() {
   data.forEach((d, i) => {
     let ne = d["Id"];
     d.highlight = !!neIndex[d.Id];
-    return true;
   });
+
+  const highlights = props.focusedEntities && props.focusedEntities.length>0;
 
   const sizing = getSizing();
   const margin = sizing.margin;
@@ -121,38 +126,126 @@ function updateHighlight() {
   let hlCanvas = d3.select('#basemap-container canvas.hlCanvas')
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom);
+  let hlCtx = hlCanvas.node().getContext('2d');
+  let lbCanvas = d3.select('#basemap-container canvas.lbCanvas')
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom);
+  let lbCtx = lbCanvas.node().getContext('2d');
+  let lCanvas = d3.select('#basemap-container canvas.lCanvas')
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom);
+  let lCtx = lCanvas.node().getContext('2d');
   let hiddenCanvas = d3.select('#basemap-container canvas.hiddenCanvas')
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom);
+  let hiddenCtx = hiddenCanvas.node().getContext('2d');
 
-  let hlCtx = hlCanvas.node().getContext('2d');
+  let orderedNodes
 
-  // Add dots (highlight halo)
-  hlCtx.fillStyle = '#dfddce';
-  data
-  .filter(d => d.highlight)
-  .forEach(d => {
-    hlCtx.beginPath();
-    hlCtx.arc(x(d.x), y(d.y), sizeRatio*d.size + 2, 0, 2*Math.PI);
-    hlCtx.fill();
+  if (highlights) {
+
+    // Add dots (highlight halo)
+    hlCtx.fillStyle = '#dfddce';
+    data
+    .filter(d => d.highlight)
+    .forEach(d => {
+      hlCtx.beginPath();
+      hlCtx.arc(x(d.x), y(d.y), 5*sizeRatio*d.size + 2, 0, 2*Math.PI);
+      hlCtx.fill();
+    })
+
+    // Blur!
+    StackBlur.canvasRGBA(hlCtx.canvas, 0, 0, hlCtx.canvas.width, hlCtx.canvas.height, hlCtx.canvas.width/64);
+
+    // Add dots (highlight)
+    hlCtx.fillStyle = '#FFF';
+    data
+    .filter(d => d.highlight)
+    .forEach(d => {
+      hlCtx.beginPath();
+      hlCtx.arc(x(d.x), y(d.y), 2*sizeRatio*d.size, 0, 2*Math.PI);
+      hlCtx.fill();
+    })
+
+    // Order nodes for labels
+    orderedNodes = data.filter(d => d.highlight)
+    lCtx.strokeStyle = "#FFFFFF"
+
+  } else {
+    // No highlights: just show the dots
+    // Add dots (highlight)
+    hlCtx.fillStyle = '#766e6c';
+    data
+    .forEach(d => {
+      hlCtx.beginPath();
+      hlCtx.arc(x(d.x), y(d.y), sizeRatio*d.size, 0, 2*Math.PI);
+      hlCtx.fill();
+    })
+
+    // Order nodes for labels
+    orderedNodes = data.filter(d => true)
+    lCtx.strokeStyle = "#bfbda8";
+  }
+
+  // Order nodes! (to display labels)
+  orderedNodes.sort(function(a,b){
+    return b.size-a.size
   })
 
-  // Blur!
-  StackBlur.canvasRGBA(hlCtx.canvas, 0, 0, hlCtx.canvas.width, hlCtx.canvas.height, hlCtx.canvas.width/32);
+  // Display labels
+  const fontSize = 14
+  const yOffset = 8
+  const boxMargin = 6
+  lCtx.font = fontSize+'px sans-serif';
+  lCtx.textAlign = 'center';
+  lCtx.fillStyle = "#000000";
+  lCtx.lineWidth = 6;
+  lCtx.lineJoin = "round"
+  lCtx.lineCap = "round"
+  // Bounding box context
+  lbCtx.fillStyle = "#FFFFFF";
+  const skip = 3 // Speed up (precision loss though)
+  orderedNodes
+  .filter((d,i) => i<500)
+  .forEach((d,i) => {
+    const label = d.Id;
+    // Bounding box
+    const box = lCtx.measureText(label)
+    const w = box.width + 2*boxMargin
+    const h = 0.8*fontSize + 2*boxMargin
+    const xmin = x(d.x)-w/2
+    const ymin = y(d.y)-h/2+yOffset
+    const xmax = xmin + w
+    const ymax = ymin + h
 
-  // Add dots (highlight)
-  hlCtx.fillStyle = '#FFF';
-  data
-  .filter(d => d.highlight)
-  .forEach(d => {
-    hlCtx.beginPath();
-    hlCtx.arc(x(d.x), y(d.y), sizeRatio*d.size, 0, 2*Math.PI);
-    hlCtx.fill();
+    let display = true
+    for (let x=xmin; x<xmax; x+=skip) {
+      for (let y=ymin; y<ymax; y+=skip) {
+        var p = lbCtx.getImageData(x, y, 1, 1).data;
+        if (p[0]>0) {
+          x = xmax
+          y = ymax
+          display = false
+        }
+      }
+    }
+
+    if (display) {
+
+      lbCtx.rect(xmin, ymin, w, h)
+      lbCtx.fill();
+
+      lCtx.strokeText(label, x(d.x), y(d.y)+yOffset);
+      lCtx.fillText(label, x(d.x), y(d.y)+yOffset);
+
+    }
   })
 
 }
 
 function updateBackground() {
+  console.log("Update background")
+  
   const sizing = getSizing();
   const margin = sizing.margin;
   const width = sizing.width;
@@ -178,7 +271,7 @@ function updateBackground() {
     bgCtx.fill();
   })
 
-  // Add dots (non highlight)
+  // Add dots
   bgCtx.fillStyle = '#acaa92';
   data.forEach(d => {
     bgCtx.beginPath();
@@ -204,7 +297,6 @@ function getSizing() {
   ns.width = containerWidth - ns.margin.left - ns.margin.right;
   ns.height = containerHeight - ns.margin.top - ns.margin.bottom;
   ns.nodeMargin = 4;
-
 
   // Normalize ranges so that the two axes correspond (in the data)
   var xRange = d3.extent(data, (d) => d.x);
@@ -238,7 +330,7 @@ function getSizing() {
   // Add Y axis
   ns.y = d3.scaleLinear().domain(yRange).range([yPicRange[1], yPicRange[0]]);
 
-  ns.sizeRatio = 1;
+  ns.sizeRatio = .3;
 
   return ns
 }
