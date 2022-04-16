@@ -51,7 +51,7 @@ const buildQueryObject = function() {
     return {
         "query_string": {
           "query": query.value,
-          "default_field": "full_text"
+          "default_field": "text"
         }
       }
   }

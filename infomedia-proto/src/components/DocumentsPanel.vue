@@ -82,7 +82,7 @@ let emitEntity = ref(function(entity) {
       >
         <h2>{{ doc._source.heading }}</h2>
         <div class="card-content" v-if="showText" style="white-space: pre-wrap">
-          {{ doc._source.full_text }}
+          {{ doc._source.text }}
         </div>
         <div v-if="showEntities" class="pill-box">
           <div

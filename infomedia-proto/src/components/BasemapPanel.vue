@@ -121,6 +121,7 @@ function updateHighlight() {
   const x = sizing.x;
   const y = sizing.y;
   const sizeRatio = sizing.sizeRatio;
+  const nodeSizeOffset = 16;
 
   let hlCanvas = d3.select('#basemap-container canvas.hlCanvas')
     .attr('width', width + margin.left + margin.right)
@@ -144,12 +145,12 @@ function updateHighlight() {
   if (highlights) {
 
     // Add dots (highlight halo)
-    hlCtx.fillStyle = '#dfddce';
+    hlCtx.fillStyle = 'rgba(255,255,255,.4)';
     data
     .filter(d => d.highlight)
     .forEach(d => {
       hlCtx.beginPath();
-      hlCtx.arc(x(d.x), y(d.y), 5*sizeRatio*d.size + 2, 0, 2*Math.PI);
+      hlCtx.arc(x(d.x), y(d.y), sizeRatio*d.size + nodeSizeOffset, 0, 2*Math.PI);
       hlCtx.fill();
     })
 
@@ -162,7 +163,7 @@ function updateHighlight() {
     .filter(d => d.highlight)
     .forEach(d => {
       hlCtx.beginPath();
-      hlCtx.arc(x(d.x), y(d.y), 2*sizeRatio*d.size, 0, 2*Math.PI);
+      hlCtx.arc(x(d.x), y(d.y), sizeRatio*d.size + .5, 0, 2*Math.PI);
       hlCtx.fill();
     })
 
@@ -177,7 +178,7 @@ function updateHighlight() {
     data
     .forEach(d => {
       hlCtx.beginPath();
-      hlCtx.arc(x(d.x), y(d.y), sizeRatio*d.size, 0, 2*Math.PI);
+      hlCtx.arc(x(d.x), y(d.y), sizeRatio*d.size + .5, 0, 2*Math.PI);
       hlCtx.fill();
     })
 
@@ -295,7 +296,7 @@ function getSizing() {
   ns.margin = { top: 0, right: 0, bottom: 0, left: 0 };
   ns.width = containerWidth - ns.margin.left - ns.margin.right;
   ns.height = containerHeight - ns.margin.top - ns.margin.bottom;
-  ns.nodeMargin = 4;
+  ns.nodeMargin = 8;
 
   // Normalize ranges so that the two axes correspond (in the data)
   var xRange = d3.extent(data, (d) => d.x);
