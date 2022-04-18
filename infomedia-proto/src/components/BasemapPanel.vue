@@ -31,6 +31,7 @@
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import * as d3 from "d3";
 import * as StackBlur from "stackblur-canvas"
+import appSettings from '../plugins/settings';
 
 const props = defineProps({
   focusedEntities: Array
@@ -42,7 +43,7 @@ let data
 onMounted(() => {
   console.log("Loading basemap data...");
   let _NECoordinates = {};
-  d3.csv("/add-datascape/data/infomedia basemap.csv", (row) => {
+  d3.csv(appSettings.basemap, (row) => {
     row["Id"] = row["Id"].toLowerCase();
     let ne = row["Id"]
     _NECoordinates[ne] = row;
@@ -330,7 +331,7 @@ function getSizing() {
   // Add Y axis
   ns.y = d3.scaleLinear().domain(yRange).range([yPicRange[1], yPicRange[0]]);
 
-  ns.sizeRatio = .3;
+  ns.sizeRatio = appSettings.sizeRatio * .3;
 
   return ns
 }

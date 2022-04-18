@@ -5,7 +5,7 @@ import QueryField from "../components/QueryField.vue";
 import DocumentsPanel from "../components/DocumentsPanel.vue";
 import BasemapPanel from "../components/BasemapPanel.vue";
 import * as d3 from "d3";
-import appSettings from '../plugins/settings'
+import appSettings from '../plugins/settings';
 
 // let docs = reactive({});
 let docsFetched = ref([]);
@@ -52,7 +52,7 @@ const buildQueryObject = function() {
     return {
         "query_string": {
           "query": query.value,
-          "default_field": "text"
+          "default_field": appSettings.esTextField
         }
       }
   }
@@ -61,7 +61,7 @@ const buildQueryObject = function() {
 const initQuery = function() {
   console.log("Query:", buildQueryObject())
   docDisplayCount.value = 2*docDisplayBatch.value
-  fetchES("infomedia/_search/", {
+  fetchES(appSettings.esIndex+"/_search/", {
       "track_total_hits": true,
       "from": 0,
       "size": docDisplayCount.value,
@@ -70,7 +70,7 @@ const initQuery = function() {
         "entities-agg": {
           "terms": {
             "size": 100,
-            "field": "entities"
+            "field": appSettings.esEntitiesField
           }
         }
       }
@@ -133,7 +133,7 @@ watch(query, (newQuery) => {
 <template>
   <main style="display: flex; flex-grow: 1; overflow: hidden">
     <div style="flex-grow: 1; display: flex; flex-direction: column">
-      <div><h1>{{ appSettings.title }}</h1></div>
+      <div><h1>ADD | {{ appSettings.title }}</h1></div>
       <div
         style="
           height: 200px;

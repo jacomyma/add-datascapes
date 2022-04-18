@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from "vue";
+import appSettings from '../plugins/settings';
 
 const props = defineProps({
   docsTotal: Number,
@@ -11,7 +12,7 @@ const props = defineProps({
 const emit = defineEmits(['focusedEntities'])
 
 const showText = ref(false);
-const showEntities = ref(true);
+const showEntities = ref(false);
 
 let emitDoc = ref(function(doc) {
   if (doc && doc._source && doc._source.entities) {
@@ -24,6 +25,9 @@ let emitDoc = ref(function(doc) {
 let emitEntity = ref(function(entity) {
   emit('focusedEntities', [entity])
 })
+
+// Note: this is for templating, so that we write JSON paths as strings in the settings
+const get = ref((t, path) => path.split(".").reduce((r, k) => r?.[k], t))
 
 </script>
 
@@ -80,20 +84,20 @@ let emitEntity = ref(function(entity) {
         @mouseleave="emitDoc()"
         class="card"
       >
-        <h2>{{ doc._source.heading }}</h2>
+        <h2>{{ get(doc._source, appSettings.esTitleField) }}</h2>
         <div class="card-content" v-if="showText" style="white-space: pre-wrap">
-          {{ doc._source.text }}
+          {{ get(doc._source, appSettings.esTextField) }}
         </div>
         <div v-if="showEntities" class="pill-box">
           <div
             class="entity-pill"
-            v-for="entity in doc._source.entities"
+            v-for="entity in get(doc._source, appSettings.esEntitiesField)"
             @mouseenter="emitEntity(entity)"
             @mouseleave="emitDoc(doc)"
           >{{ entity }}</div>
         </div>
         <small
-          ><em>{{ doc._source.sourcename }}</em> &nbsp;·&nbsp; {{ doc._source.publishdate }} &nbsp;·&nbsp;
+          ><em>{{ get(doc._source, appSettings.esSourceField) }}</em> &nbsp;·&nbsp; {{ get(doc._source, appSettings.esDateField) }} &nbsp;·&nbsp;
           {{ doc._id }}
         </small>
       </div>
