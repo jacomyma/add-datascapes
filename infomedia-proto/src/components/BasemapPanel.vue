@@ -145,7 +145,7 @@ function updateHighlight() {
   if (highlights) {
 
     // Add dots (highlight halo)
-    hlCtx.fillStyle = 'rgba(255,255,255,.4)';
+    hlCtx.fillStyle = 'rgba(255,255,255,.2)';
     data
     .filter(d => d.highlight)
     .forEach(d => {
@@ -155,7 +155,7 @@ function updateHighlight() {
     })
 
     // Blur!
-    StackBlur.canvasRGBA(hlCtx.canvas, 0, 0, hlCtx.canvas.width, hlCtx.canvas.height, hlCtx.canvas.width/64);
+    StackBlur.canvasRGBA(hlCtx.canvas, 0, 0, hlCtx.canvas.width, hlCtx.canvas.height, hlCtx.canvas.width/50);
 
     // Add dots (highlight)
     hlCtx.fillStyle = '#FFF';
@@ -184,7 +184,7 @@ function updateHighlight() {
 
     // Order nodes for labels
     orderedNodes = data.filter(d => true)
-    lCtx.strokeStyle = "#bfbda8";
+    lCtx.strokeStyle = "#999785";
   }
 
   // Order nodes! (to display labels)
@@ -260,11 +260,11 @@ function updateBackground() {
     .attr('height', height + margin.top + margin.bottom);
 
   let bgCtx = bgCanvas.node().getContext('2d');
-  bgCtx.fillStyle = '#c0cbcd';
+  bgCtx.fillStyle = '#9ba7a9';
   bgCtx.fillRect(0, 0, bgCtx.canvas.width, bgCtx.canvas.height);
 
   // Add dots background
-  bgCtx.fillStyle = '#bfbda8';
+  bgCtx.fillStyle = '#999785';
   data.forEach(d => {
     bgCtx.beginPath();
     bgCtx.arc(x(d.x), y(d.y), sizeRatio*d.size + nodeMargin, 0, 2*Math.PI);
@@ -272,7 +272,7 @@ function updateBackground() {
   })
 
   // Add dots
-  bgCtx.fillStyle = '#acaa92';
+  bgCtx.fillStyle = '#615e5b';
   data.forEach(d => {
     bgCtx.beginPath();
     bgCtx.arc(x(d.x), y(d.y), sizeRatio*d.size, 0, 2*Math.PI);
