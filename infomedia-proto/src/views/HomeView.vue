@@ -5,6 +5,7 @@ import QueryField from "../components/QueryField.vue";
 import DocumentsPanel from "../components/DocumentsPanel.vue";
 import BasemapPanel from "../components/BasemapPanel.vue";
 import * as d3 from "d3";
+import appSettings from '../plugins/settings'
 
 // let docs = reactive({});
 let docsFetched = ref([]);
@@ -132,6 +133,7 @@ watch(query, (newQuery) => {
 <template>
   <main style="display: flex; flex-grow: 1; overflow: hidden">
     <div style="flex-grow: 1; display: flex; flex-direction: column">
+      <div><h1>{{ appSettings.title }}</h1></div>
       <div
         style="
           height: 200px;
