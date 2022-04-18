@@ -22,6 +22,10 @@
 .bgCanvas, .hlCanvas, .hiddenCanvas, .lCanvas, .lbCanvas {
   position: absolute;
 }
+.lCanvas {
+  width: 100%;
+  height: 100%;
+}
 .hiddenCanvas, .lbCanvas {
   display: none;
 }
@@ -133,9 +137,11 @@ function updateHighlight() {
     .attr('height', height + margin.top + margin.bottom);
   let lbCtx = lbCanvas.node().getContext('2d');
   let lCanvas = d3.select('#basemap-container canvas.lCanvas')
-    .attr('width', width + margin.left + margin.right)
-    .attr('height', height + margin.top + margin.bottom);
+    .attr('width', (width + margin.left + margin.right)*window.devicePixelRatio)
+    .attr('height', (height + margin.top + margin.bottom)*window.devicePixelRatio);
   let lCtx = lCanvas.node().getContext('2d');
+  lCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset to avoid any problem
+  lCtx.scale(2, 2)
   let hiddenCanvas = d3.select('#basemap-container canvas.hiddenCanvas')
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom);
@@ -170,7 +176,8 @@ function updateHighlight() {
 
     // Order nodes for labels
     orderedNodes = data.filter(d => d.highlight)
-    lCtx.strokeStyle = "#FFFFFF"
+    lCtx.strokeStyle = "#999785"
+    lCtx.fillStyle = "#FFFFFF";
 
   } else {
     // No highlights: just show the dots
@@ -186,6 +193,7 @@ function updateHighlight() {
     // Order nodes for labels
     orderedNodes = data.filter(d => true)
     lCtx.strokeStyle = "#999785";
+    lCtx.fillStyle = "#000000";
   }
 
   // Order nodes! (to display labels)
@@ -199,8 +207,7 @@ function updateHighlight() {
   const boxMargin = 6
   lCtx.font = fontSize+'px sans-serif';
   lCtx.textAlign = 'center';
-  lCtx.fillStyle = "#000000";
-  lCtx.lineWidth = 6;
+  lCtx.lineWidth = 4;
   lCtx.lineJoin = "round"
   lCtx.lineCap = "round"
   // Bounding box context

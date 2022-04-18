@@ -130,10 +130,26 @@ watch(query, (newQuery) => {
 });
 </script>
 
+
+
+<style>
+main {
+  background-color: #9ba7a9;
+}
+.headline {
+  padding: 12px;
+}
+.headline h1 {
+  margin: 0;
+}
+</style>
+
+
+
 <template>
   <main style="display: flex; flex-grow: 1; overflow: hidden">
     <div style="flex-grow: 1; display: flex; flex-direction: column">
-      <div><h1>ADD | {{ appSettings.title }}</h1></div>
+      <div class="headline"><h1>ADD | {{ appSettings.title }}</h1></div>
       <div
         style="
           height: 200px;
