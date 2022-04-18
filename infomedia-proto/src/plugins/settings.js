@@ -7,7 +7,22 @@ const infomediaSettings = {
 	esSourceField: "sourcename",
 	esDateField: "publishdate",
 	basemap: "/add-datascape/data/Infomedia basemap.csv",
-	sizeRatio: 1,
+	basemapNodeSizeRatio: 1,
+	basemapLabels: [
+		{x:0, y:0, anchor:'center', label:"Origin (test label annotation)"}
+	],
+	basemapPolygons: [
+		[
+			[-62,971],
+			[-70,798],
+			[-27,582],
+			[216,531],
+			[266,678],
+			[281,956],
+			[154,1145],
+			[-62,971]
+		]
+	],
 }
 
 const scopusSettings = {
@@ -19,7 +34,9 @@ const scopusSettings = {
 	esSourceField: "coredata.prism:publicationName",
 	esDateField: "coredata.prism:coverDate",
 	basemap: "/add-datascape/data/Scopus basemap.csv",
-	sizeRatio: 0.3,
+	basemapNodeSizeRatio: 0.3,
+	basemapLabels: [],
+	basemapPolygons: [],
 }
 
 

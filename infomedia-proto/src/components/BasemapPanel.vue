@@ -8,6 +8,7 @@
       <canvas class="hlCanvas"></canvas><!-- Highlights -->
       <canvas class="lbCanvas"></canvas><!-- Label blocks -->
       <canvas class="lCanvas"></canvas><!-- Labels -->
+      <canvas class="aCanvas"></canvas><!-- Annotations -->
       <canvas class="hiddenCanvas"></canvas>
     </div>
     <div id="basemap-tooltip"></div>
@@ -19,10 +20,10 @@
   position: relative;
   overflow: hidden;
 }
-.bgCanvas, .hlCanvas, .hiddenCanvas, .lCanvas, .lbCanvas {
+.bgCanvas, .hlCanvas, .hiddenCanvas, .lCanvas, .lbCanvas, .aCanvas {
   position: absolute;
 }
-.lCanvas {
+.lCanvas, .aCanvas {
   width: 100%;
   height: 100%;
 }
@@ -146,7 +147,13 @@ function updateHighlight() {
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom);
   let hiddenCtx = hiddenCanvas.node().getContext('2d');
-
+  let aCanvas = d3.select('#basemap-container canvas.aCanvas')
+    .attr('width', (width + margin.left + margin.right)*window.devicePixelRatio)
+    .attr('height', (height + margin.top + margin.bottom)*window.devicePixelRatio);
+  let aCtx = aCanvas.node().getContext('2d');
+  aCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset to avoid any problem
+  aCtx.scale(2, 2)
+  
   let orderedNodes
 
   if (highlights) {
@@ -249,6 +256,43 @@ function updateHighlight() {
     }
   })
 
+  // Annotations
+  // Polygons
+  aCtx.lineWidth = .8;
+  aCtx.strokeStyle = "#FFFFFF"
+  appSettings.basemapPolygons.forEach(polygon => {
+    aCtx.beginPath()
+    polygon.forEach((d,i) => {
+      if (i==0) {
+        aCtx.moveTo(x(d[0]), y(d[1]))
+      } else {
+        aCtx.lineTo(x(d[0]), y(d[1]))
+      }
+    })
+    aCtx.stroke()
+  })
+  // Labels
+  aCtx.font = 'italic 18px sans-serif';
+  aCtx.lineWidth = 3;
+  aCtx.lineJoin = "round"
+  aCtx.lineCap = "round"
+  aCtx.strokeStyle = "#9ba7a9"
+  aCtx.fillStyle = "#FFFFFF";
+  appSettings.basemapLabels.forEach(d => {
+    aCtx.textAlign = d.anchor || 'center';
+    aCtx.strokeText(d.label, x(d.x), y(d.y)+yOffset);
+    aCtx.fillText(d.label, x(d.x), y(d.y)+yOffset);
+  })
+
+  // Bind mouse stuff
+  d3.select('.aCanvas').on('click', function(e){
+    let mouseX = e.layerX || e.offsetX;
+    let mouseY = e.layerY || e.offsety;
+    let X = Math.round(sizing.x.invert(mouseX))
+    let Y = Math.round(sizing.y.invert(mouseY))
+    console.log(X, Y)
+  })
+
 }
 
 function updateBackground() {
@@ -338,7 +382,7 @@ function getSizing() {
   // Add Y axis
   ns.y = d3.scaleLinear().domain(yRange).range([yPicRange[1], yPicRange[0]]);
 
-  ns.sizeRatio = appSettings.sizeRatio * .3;
+  ns.sizeRatio = appSettings.basemapNodeSizeRatio * .3;
 
   return ns
 }
