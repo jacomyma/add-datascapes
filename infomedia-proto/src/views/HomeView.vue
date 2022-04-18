@@ -152,10 +152,10 @@ main {
       <div class="headline"><h1>ADD | {{ appSettings.title }}</h1></div>
       <div
         style="
-          height: 200px;
+          height: 50px;
           display: flex;
           flex-direction: column;
-          align-items: center;
+          align-items: stretch;
           justify-content: center;
         "
       >
