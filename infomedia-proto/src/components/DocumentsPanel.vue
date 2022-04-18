@@ -32,8 +32,22 @@ const get = ref((t, path) => path.split(".").reduce((r, k) => r?.[k], t))
 </script>
 
 <style>
-.card:hover {
+.card {
   cursor: pointer;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 6px 10px rgb(0 0 0 / 8%), 0 0 6px rgb(0 0 0 / 5%);
+  transition: .3s transform cubic-bezier(.155,1.105,.295,1.12),.3s box-shadow,.3s -webkit-transform cubic-bezier(.155,1.105,.295,1.12);
+  padding: 6px 12px;
+  margin: 12px;
+  font-family: 'IBM Plex Serif', serif;
+}
+.card-content {
+  font-size: 1.15em;
+  line-height: 1.6em;
+  margin-top:  12px;
+  margin-bottom:  6px;
+  word-wrap: break-word;
 }
 .pill-box {
   display: flex;
@@ -46,7 +60,7 @@ const get = ref((t, path) => path.split(".").reduce((r, k) => r?.[k], t))
   border-radius: 12px;
   min-width: 24px;
   min-height: 24px;
-  background-color: rgba(255,255,255,0.1);
+  background-color: #EEEEEE;
   padding: 1px 12px;
   font-family: sans-serif;
   cursor: pointer;

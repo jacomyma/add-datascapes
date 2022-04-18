@@ -142,6 +142,9 @@ main {
 .headline h1 {
   margin: 0;
 }
+.documents-panel {
+  background-color: #cdd4d5;
+}
 </style>
 
 
@@ -166,6 +169,7 @@ main {
       </div>
     </div>
     <div
+      class="documents-panel"
       style="
         width: 600px;
         display: flex;
