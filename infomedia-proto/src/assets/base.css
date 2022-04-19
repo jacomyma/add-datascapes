@@ -95,21 +95,6 @@ div.sticky {
   top: 0;
 }
 
-.pure-button {
-  color: var(--color-text-soft);
-  background: var(--color-background-soft);
-}
-
-.pure-button:hover {
-  color: var(--color-text);
-  background: var(--color-background-soft);
-}
-
-.pure-button:active {
-  color: var(--color-text);
-  background: var(--color-background);
-}
-
 #basemap-tooltip {
   opacity: 0;
   position: absolute;

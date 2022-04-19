@@ -1,5 +1,6 @@
 const infomediaSettings = {
 	title: "Infomedia | How do algorithms make the news?",
+	helpPage: "help-infomedia",
 	esIndex: "infomedia",
 	esTextField: "text",
 	esEntitiesField: "entities",
@@ -72,7 +73,6 @@ const scopusSettings = {
 	basemapLabelsLines: [],
 	basemapPolygons: [],
 }
-
 
 // export default scopusSettings
 export default infomediaSettings

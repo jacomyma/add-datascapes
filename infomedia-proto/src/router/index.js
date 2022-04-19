@@ -14,6 +14,11 @@ const router = createRouter({
       name: "doc",
       component: () => import("../views/DocView.vue"),
     },
+    {
+      path: "/help-infomedia",
+      name: "help-infomedia",
+      component: () => import("../views/HelpInfomedia.vue"),
+    },
   ],
 });
 

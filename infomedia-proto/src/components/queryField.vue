@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from "vue";
+import appSettings from '../plugins/settings';
 
 const emit = defineEmits(["query"]);
 
@@ -19,6 +20,7 @@ function validate() {
       class="pure-input-rounded"
       style="margin-right: 12px; flex-grow: 1;"
     />
-    <button class="pure-button" @click="validate" style="width: 200px">Filter</button>
+    <button class="pure-button pure-button-primary" @click="validate" style="width: 200px; margin-right: 12px;">Filter</button>
+    <a class="pure-button" :href="appSettings.helpPage" target="_blank">Help?</a>
   </div>
 </template>
