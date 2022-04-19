@@ -65,7 +65,7 @@ const buildQueryObject = function() {
 const initQuery = function() {
   console.log("Query:", buildQueryObject())
   docDisplayCount.value = 2*docDisplayBatch.value
-  
+
   let body = {
     "track_total_hits": true,
     "from": 0,
@@ -81,11 +81,8 @@ const initQuery = function() {
     }
   }
   if (query.value == "") {
-    body["sort"] = {
-      "publishdate": {
-        "order": "desc"
-      }
-    }
+    body["sort"] = {}
+    body["sort"][appSettings.esDateField] = {"order": "desc"}
   }
 
   fetchES(appSettings.esIndex+"/_search/", body)
