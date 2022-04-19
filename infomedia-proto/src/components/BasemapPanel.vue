@@ -64,6 +64,7 @@ onMounted(() => {
       d.x = +d.x;
       d.y = +d.y;
       d.size = +d.size;
+      d.showlabel = d.showlabel == "true"
       if (isNaN(d.x) || isNaN(d.y) || isNaN(d.size)) return false;
       else return true;
     });
@@ -178,7 +179,7 @@ function updateHighlight() {
     .filter(d => d.highlight)
     .forEach(d => {
       hlCtx.beginPath();
-      hlCtx.arc(x(d.x), y(d.y), sizeRatio*d.size + .5, 0, 2*Math.PI);
+      hlCtx.arc(x(d.x), y(d.y), sizeRatio*d.size + 1, 0, 2*Math.PI);
       hlCtx.fill();
     })
 
@@ -206,7 +207,15 @@ function updateHighlight() {
 
   // Order nodes! (to display labels)
   orderedNodes.sort(function(a,b){
-    return b.size-a.size
+    if (a.showlabel) {
+      if (b.showlabel) {
+        return b.size-a.size
+      } else return -1
+    } else {
+      if (b.showlabel) {
+        return 1
+      } else return b.size-a.size      
+    }
   })
 
   // Display labels
@@ -222,7 +231,7 @@ function updateHighlight() {
     lCtx.lineCap = "round"
     // Bounding box context
     lbCtx.fillStyle = "#FFFFFF";
-    const skip = 3 // Speed up (precision loss though)
+    const skip = 5 // Speed up (precision loss though)
     let cap = labelsToConsider
     orderedNodes
     .filter((d,i) => i<labelsToConsider)
@@ -351,7 +360,7 @@ function updateBackground() {
 
     // Label text
     const yOffset = 6
-    aCtx.font = '300 22px "IBM Plex Serif", sans-serif';
+    aCtx.font = '16px "IBM Plex Serif", sans-serif';
     aCtx.lineWidth = 4;
     aCtx.lineJoin = "round"
     aCtx.lineCap = "round"
@@ -359,8 +368,8 @@ function updateBackground() {
     aCtx.fillStyle = "#286667";
     appSettings.basemapLabels.forEach(d => {
       aCtx.textAlign = d.anchor || 'center';
-      aCtx.strokeText(d.label, x(d.x), y(d.y)+yOffset);
-      aCtx.fillText(d.label, x(d.x), y(d.y)+yOffset);
+      aCtx.strokeText(d.label.toUpperCase(), x(d.x), y(d.y)+yOffset);
+      aCtx.fillText(d.label.toUpperCase(), x(d.x), y(d.y)+yOffset);
     })
   }
 }
