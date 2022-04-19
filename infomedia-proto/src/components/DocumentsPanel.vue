@@ -13,10 +13,14 @@ const emit = defineEmits(['focusedEntities'])
 
 const showText = ref(false);
 const showEntities = ref(false);
+const selectedDoc = ref(false);
+
+// Note: this is for templating, so that we write JSON paths as strings in the settings
+const get = ref((t, path) => path.split(".").reduce((r, k) => r?.[k], t))
 
 let emitDoc = ref(function(doc) {
-  if (doc && doc._source && doc._source.entities) {
-    emit('focusedEntities', doc._source.entities)
+  if (doc && doc._source && get.value(doc._source, appSettings.esEntitiesField)) {
+    emit('focusedEntities', get.value(doc._source, appSettings.esEntitiesField))
   } else {
     emit('focusedEntities', [])
   }
@@ -26,8 +30,9 @@ let emitEntity = ref(function(entity) {
   emit('focusedEntities', [entity])
 })
 
-// Note: this is for templating, so that we write JSON paths as strings in the settings
-const get = ref((t, path) => path.split(".").reduce((r, k) => r?.[k], t))
+let openDoc = ref(function(id) {
+  window.open("doc/"+id);
+})
 
 </script>
 
@@ -96,6 +101,7 @@ const get = ref((t, path) => path.split(".").reduce((r, k) => r?.[k], t))
         v-for="doc in docs"
         @mouseenter="emitDoc(doc)"
         @mouseleave="emitDoc()"
+        @click="openDoc(doc._id)"
         class="card"
       >
         <h2>{{ get(doc._source, appSettings.esTitleField) }}</h2>
