@@ -221,7 +221,8 @@ function updateHighlight() {
   lbCtx.fillStyle = "#FFFFFF";
   const skip = 3 // Speed up (precision loss though)
   orderedNodes
-  .filter((d,i) => i<500)
+  .filter((d,i) => i<0)
+  // .filter((d,i) => i<500)
   .forEach((d,i) => {
     const label = d.Id;
     // Bounding box
@@ -290,14 +291,17 @@ function updateHighlight() {
     let mouseY = e.layerY || e.offsety;
     let X = Math.round(sizing.x.invert(mouseX))
     let Y = Math.round(sizing.y.invert(mouseY))
-    console.log(X, Y)
+    // TODO: remove me
+    window.polygon.push("["+X+","+Y+"]")
+    console.log(window.polygon.join(","))
   })
 
 }
 
 function updateBackground() {
   console.log("Update background")
-  
+  window.polygon = [] // TODO: remove me
+
   const sizing = getSizing();
   const margin = sizing.margin;
   const width = sizing.width;
