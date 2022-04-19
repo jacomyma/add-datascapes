@@ -349,7 +349,7 @@ function getSizing() {
     document.getElementById("basemap-container").offsetHeight;
 
   // set the dimensions and margins of the graph
-  ns.margin = { top: 0, right: 0, bottom: 0, left: 0 };
+  ns.margin = { top: 20, right: 80, bottom: 20, left: 80 };
   ns.width = containerWidth - ns.margin.left - ns.margin.right;
   ns.height = containerHeight - ns.margin.top - ns.margin.bottom;
   ns.nodeMargin = 8;
@@ -368,8 +368,8 @@ function getSizing() {
   }
 
   // Normalize ranges so that the two axes correspond (in the picture)
-  var xPicRange = [3 * ns.nodeMargin, ns.width - 3 * ns.nodeMargin];
-  var yPicRange = [3 * ns.nodeMargin, ns.height - 3 * ns.nodeMargin];
+  var xPicRange = [ns.margin.left + 3 * ns.nodeMargin, ns.margin.left + ns.width - 3 * ns.nodeMargin];
+  var yPicRange = [ns.margin.top + 3 * ns.nodeMargin, ns.margin.top + ns.height - 3 * ns.nodeMargin];
   if (xPicRange[1] - xPicRange[0] < yPicRange[1] - yPicRange[0]) {
     let yMean = 0.5 * (yPicRange[0] + yPicRange[1]);
     yPicRange[0] = yMean - 0.5 * (xPicRange[1] - xPicRange[0]);
