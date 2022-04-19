@@ -65,20 +65,30 @@ const buildQueryObject = function() {
 const initQuery = function() {
   console.log("Query:", buildQueryObject())
   docDisplayCount.value = 2*docDisplayBatch.value
-  fetchES(appSettings.esIndex+"/_search/", {
-      "track_total_hits": true,
-      "from": 0,
-      "size": docDisplayCount.value,
-      "query": buildQueryObject(),
-      "aggs": {
-        "entities-agg": {
-          "terms": {
-            "size": 100,
-            "field": appSettings.esEntitiesField
-          }
+  
+  let body = {
+    "track_total_hits": true,
+    "from": 0,
+    "size": docDisplayCount.value,
+    "query": buildQueryObject(),
+    "aggs": {
+      "entities-agg": {
+        "terms": {
+          "size": 100,
+          "field": appSettings.esEntitiesField
         }
       }
-    })
+    }
+  }
+  if (query.value == "") {
+    body["sort"] = {
+      "publishdate": {
+        "order": "desc"
+      }
+    }
+  }
+
+  fetchES(appSettings.esIndex+"/_search/", body)
   .then(response => {
     console.log(response)
     docsFetched.value = response.hits.hits
