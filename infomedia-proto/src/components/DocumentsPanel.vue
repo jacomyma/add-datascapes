@@ -84,7 +84,7 @@ const get = ref((t, path) => path.split(".").reduce((r, k) => r?.[k], t))
           <label for="show-text" style="padding: 6px">
             <input type="checkbox" id="show-text" v-model="showText" /> Show text
           </label>
-          <label for="show-entities">
+          <label for="show-entities" style="padding: 6px">
             <input type="checkbox" id="show-entities" v-model="showEntities" /> Show named entities
           </label>
         </fieldset>

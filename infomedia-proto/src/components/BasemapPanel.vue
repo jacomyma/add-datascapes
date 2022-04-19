@@ -39,7 +39,10 @@ import * as StackBlur from "stackblur-canvas"
 import appSettings from '../plugins/settings';
 
 const props = defineProps({
-  focusedEntities: Array
+  focusedEntities: Array,
+  showLabels: Boolean,
+  showClusterShapes: Boolean,
+  showClusterLabels: Boolean,
 });
 
 const NECoordinates = ref({});
@@ -74,6 +77,9 @@ onUnmounted(() => {
 });
 
 watch(() => props.focusedEntities, updateHighlight);
+watch(() => props.showLabels, updateHighlight);
+watch(() => props.showClusterLabels, updateBackground);
+watch(() => props.showClusterShapes, updateBackground);
 
 function updateBasemap() {
   console.log("Update basemap. Entities:", (props.focusedEntities || []).length);
@@ -147,12 +153,6 @@ function updateHighlight() {
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom);
   let hiddenCtx = hiddenCanvas.node().getContext('2d');
-  let aCanvas = d3.select('#basemap-container canvas.aCanvas')
-    .attr('width', (width + margin.left + margin.right)*window.devicePixelRatio)
-    .attr('height', (height + margin.top + margin.bottom)*window.devicePixelRatio);
-  let aCtx = aCanvas.node().getContext('2d');
-  aCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset to avoid any problem
-  aCtx.scale(2, 2)
   
   let orderedNodes
 
@@ -209,81 +209,60 @@ function updateHighlight() {
   })
 
   // Display labels
-  const fontSize = 14
-  const yOffset = 8
-  const boxMargin = 6
-  lCtx.font = fontSize+'px sans-serif';
-  lCtx.textAlign = 'center';
-  lCtx.lineWidth = 4;
-  lCtx.lineJoin = "round"
-  lCtx.lineCap = "round"
-  // Bounding box context
-  lbCtx.fillStyle = "#FFFFFF";
-  const skip = 3 // Speed up (precision loss though)
-  orderedNodes
-  .filter((d,i) => i<0)
-  // .filter((d,i) => i<500)
-  .forEach((d,i) => {
-    const label = d.Id;
-    // Bounding box
-    const box = lCtx.measureText(label)
-    const w = box.width + 2*boxMargin
-    const h = 0.8*fontSize + 2*boxMargin
-    const xmin = x(d.x)-w/2
-    const ymin = y(d.y)-h/2+yOffset
-    const xmax = xmin + w
-    const ymax = ymin + h
+  const yOffset = 8 
+  if (props.showLabels) {
+    const fontSize = 14
+    const boxMargin = 6
+    const labelsToConsider = 1000
+    lCtx.font = fontSize+'px sans-serif';
+    lCtx.textAlign = 'center';
+    lCtx.lineWidth = 4;
+    lCtx.lineJoin = "round"
+    lCtx.lineCap = "round"
+    // Bounding box context
+    lbCtx.fillStyle = "#FFFFFF";
+    const skip = 3 // Speed up (precision loss though)
+    let cap = labelsToConsider
+    orderedNodes
+    .filter((d,i) => i<labelsToConsider)
+    .forEach((d,i) => {
+      if (cap <= 0) {
+        return
+      }
+      const label = d.Id;
+      // Bounding box
+      const box = lCtx.measureText(label)
+      const w = box.width + 2*boxMargin
+      const h = 0.8*fontSize + 2*boxMargin
+      const xmin = x(d.x)-w/2
+      const ymin = y(d.y)-h/2+yOffset
+      const xmax = xmin + w
+      const ymax = ymin + h
 
-    let display = true
-    for (let x=xmin; x<xmax; x+=skip) {
-      for (let y=ymin; y<ymax; y+=skip) {
-        var p = lbCtx.getImageData(x, y, 1, 1).data;
-        if (p[0]>0) {
-          x = xmax
-          y = ymax
-          display = false
+      let display = true
+      for (let x=xmin; x<xmax; x+=skip) {
+        for (let y=ymin; y<ymax; y+=skip) {
+          var p = lbCtx.getImageData(x, y, 1, 1).data;
+          if (p[0]>0) {
+            x = xmax
+            y = ymax
+            display = false
+          }
         }
       }
-    }
 
-    if (display) {
+      if (display) {
+        cap--
 
-      lbCtx.rect(xmin, ymin, w, h)
-      lbCtx.fill();
+        lbCtx.rect(xmin, ymin, w, h)
+        lbCtx.fill();
 
-      lCtx.strokeText(label, x(d.x), y(d.y)+yOffset);
-      lCtx.fillText(label, x(d.x), y(d.y)+yOffset);
+        lCtx.strokeText(label, x(d.x), y(d.y)+yOffset);
+        lCtx.fillText(label, x(d.x), y(d.y)+yOffset);
 
-    }
-  })
-
-  // Annotations
-  // Polygons
-  aCtx.lineWidth = .8;
-  aCtx.strokeStyle = "#FFFFFF"
-  appSettings.basemapPolygons.forEach(polygon => {
-    aCtx.beginPath()
-    polygon.forEach((d,i) => {
-      if (i==0) {
-        aCtx.moveTo(x(d[0]), y(d[1]))
-      } else {
-        aCtx.lineTo(x(d[0]), y(d[1]))
       }
     })
-    aCtx.stroke()
-  })
-  // Labels
-  aCtx.font = 'italic 18px sans-serif';
-  aCtx.lineWidth = 3;
-  aCtx.lineJoin = "round"
-  aCtx.lineCap = "round"
-  aCtx.strokeStyle = "#9ba7a9"
-  aCtx.fillStyle = "#FFFFFF";
-  appSettings.basemapLabels.forEach(d => {
-    aCtx.textAlign = d.anchor || 'center';
-    aCtx.strokeText(d.label, x(d.x), y(d.y)+yOffset);
-    aCtx.fillText(d.label, x(d.x), y(d.y)+yOffset);
-  })
+  }
 
   // Bind mouse stuff
   d3.select('.aCanvas').on('click', function(e){
@@ -314,6 +293,12 @@ function updateBackground() {
   let bgCanvas = d3.select('#basemap-container canvas.bgCanvas')
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom);
+  let aCanvas = d3.select('#basemap-container canvas.aCanvas')
+    .attr('width', (width + margin.left + margin.right)*window.devicePixelRatio)
+    .attr('height', (height + margin.top + margin.bottom)*window.devicePixelRatio);
+  let aCtx = aCanvas.node().getContext('2d');
+  aCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset to avoid any problem
+  aCtx.scale(2, 2)
 
   let bgCtx = bgCanvas.node().getContext('2d');
   bgCtx.fillStyle = '#9ba7a9';
@@ -337,6 +322,39 @@ function updateBackground() {
 
   // Blur!
   StackBlur.canvasRGB(bgCtx.canvas, 0, 0, bgCtx.canvas.width, bgCtx.canvas.height, bgCtx.canvas.width/128);
+
+  // Annotations
+  // Polygons
+  if (props.showClusterShapes) {
+    aCtx.lineWidth = .8;
+    aCtx.strokeStyle = "#FFFFFF"
+    appSettings.basemapPolygons.forEach(polygon => {
+      aCtx.beginPath()
+      polygon.forEach((d,i) => {
+        if (i==0) {
+          aCtx.moveTo(x(d[0]), y(d[1]))
+        } else {
+          aCtx.lineTo(x(d[0]), y(d[1]))
+        }
+      })
+      aCtx.stroke()
+    })
+  }
+  // Labels
+  if (props.showClusterLabels) {
+    const yOffset = 6
+    aCtx.font = 'italic 18px sans-serif';
+    aCtx.lineWidth = 3;
+    aCtx.lineJoin = "round"
+    aCtx.lineCap = "round"
+    aCtx.strokeStyle = "#9ba7a9"
+    aCtx.fillStyle = "#FFFFFF";
+    appSettings.basemapLabels.forEach(d => {
+      aCtx.textAlign = d.anchor || 'center';
+      aCtx.strokeText(d.label, x(d.x), y(d.y)+yOffset);
+      aCtx.fillText(d.label, x(d.x), y(d.y)+yOffset);
+    })
+  }
 }
 
 function getSizing() {

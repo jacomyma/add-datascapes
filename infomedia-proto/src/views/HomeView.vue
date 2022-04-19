@@ -17,6 +17,10 @@ let docDisplayBatch = ref(25);
 let docDisplayCount = ref(0)
 let focusedEntities = ref([])
 
+const showEntitiesLabels = ref(true);
+const showClusterShapes = ref(true);
+const showClusterLabels = ref(true);
+
 const fetchES = function(route, params) {
   // const username = 'elastic'
   // const password = 'VAjkVhee**R1CeCiW+rj'
@@ -164,8 +168,28 @@ main {
       >
         <queryField @query="(q) => (query = q)" />
       </div>
+      <div style="padding: 6px">
+        <form class="pure-form">
+          <fieldset>
+            <label for="show-labels" style="padding: 6px">
+              <input type="checkbox" id="show-labels" v-model="showEntitiesLabels" /> Show labels
+            </label>
+            <label for="show-cluster-shapes" style="padding: 6px">
+              <input type="checkbox" id="show-cluster-shapes" v-model="showClusterShapes" /> Show cluster shapes
+            </label>
+            <label for="show-cluster-labels" style="padding: 6px">
+              <input type="checkbox" id="show-cluster-labels" v-model="showClusterLabels" /> Show cluster labels
+            </label>
+          </fieldset>
+        </form>
+      </div>
       <div style="background-color: #000; flex-grow: 1; display: flex">
-        <basemapPanel :focused-entities="focusedEntities"/>
+        <basemapPanel
+          :focused-entities="focusedEntities"
+          :show-labels="showEntitiesLabels"
+          :show-cluster-shapes="showClusterShapes"
+          :show-cluster-labels="showClusterLabels"
+        />
       </div>
     </div>
     <div
