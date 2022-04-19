@@ -10,7 +10,7 @@ const infomediaSettings = {
 	basemapNodeSizeRatio: 1,
 	basemapLabels: [
 		// {x:0, y:0, anchor:'center', label:"Origin (test label annotation)"}
-		{x:105, y:1166, anchor:'left', label:"European politics"},
+		{x:256, y:1058, anchor:'left', label:"European politics"},
 		{x:602, y:907, anchor:'left', label:"International conflict"},
 		{x:892, y:408, anchor:'left', label:"American politics"},
 		{x:963, y:179, anchor:'left', label:"Music industry"},
@@ -19,18 +19,21 @@ const infomediaSettings = {
 		{x:-907, y:-588, anchor:'right', label:"Danish business"},
 		{x:-851, y:537, anchor:'right', label:"Research & education"},
 		{x:-473, y:1036, anchor:'right', label:"Danish politics"},
-		{x:-28, y:1170, anchor:'right', label:"The Chinese dilemma"},
+		{x:-321, y:1170, anchor:'center', label:"The Chinese dilemma"},
 		{x:-217, y:38, anchor:'center', label:"Soccer"},
 		{x:-217, y:38, anchor:'center', label:"Soccer"},
 		{x:-15, y:211, anchor:'center', label:"Climate & development"},
 	],
+	basemapLabelsLines: [
+		[ // The Chinese dilemma
+			[-121,846],[-321,1130]
+		],
+	],
 	basemapPolygons: [
 		[ // European politics
-			[35,1100],[121,1119],[312,1088],[406,998],[433,881],[402,729],[339,612],[238,565],[152,585],[125,718],[70,827],[0,901],[-43,971],[-20,1069],[35,1100]
+			[155,599],[238,570],[335,614],[396,729],[429,884],[407,1003],[310,1090],[119,1122],[-15,1104],[-119,1032],[-130,967],[-58,931],[28,877],[72,819],[122,718],[137,635],[155,599]
 		],[ // The Chinese dilemma
 			[-62,870],[31,815],[78,725],[94,604],[55,511],[-39,491],[-70,608],[-78,718],[-133,796],[-121,846],[-62,870]
-		],[ // The Chinese dilemma - stick
-			[-121,846],[-121,1130]
 		],[ // Danish politics
 			[-86,339],[-43,366],[-51,452],[-109,597],[-117,714],[-215,835],[-308,948],[-457,998],[-667,987],[-812,827],[-831,616],[-741,515],[-605,441],[-523,378],[-386,316],[-277,304],[-168,312],[-86,339]
 		],[ // Research and education
@@ -66,6 +69,7 @@ const scopusSettings = {
 	basemap: "/add-datascape/data/Scopus basemap.csv",
 	basemapNodeSizeRatio: 0.3,
 	basemapLabels: [],
+	basemapLabelsLines: [],
 	basemapPolygons: [],
 }
 

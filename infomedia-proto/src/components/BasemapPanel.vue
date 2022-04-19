@@ -30,6 +30,7 @@
 .hiddenCanvas, .lbCanvas {
   display: none;
 }
+
 </style>
 
 <script setup>
@@ -211,10 +212,10 @@ function updateHighlight() {
   // Display labels
   const yOffset = 8 
   if (props.showLabels) {
-    const fontSize = 14
+    const fontSize = 12
     const boxMargin = 6
     const labelsToConsider = 1000
-    lCtx.font = fontSize+'px sans-serif';
+    lCtx.font = fontSize+'px "Nunito", serif';
     lCtx.textAlign = 'center';
     lCtx.lineWidth = 4;
     lCtx.lineJoin = "round"
@@ -324,31 +325,38 @@ function updateBackground() {
   StackBlur.canvasRGB(bgCtx.canvas, 0, 0, bgCtx.canvas.width, bgCtx.canvas.height, bgCtx.canvas.width/128);
 
   // Annotations
-  // Polygons
+  // Polygons & lines
+  const displayPolygons = function(shape) {
+    aCtx.beginPath()
+    shape.forEach((d,i) => {
+      if (i==0) {
+        aCtx.moveTo(x(d[0]), y(d[1]))
+      } else {
+        aCtx.lineTo(x(d[0]), y(d[1]))
+      }
+    })
+    aCtx.stroke()
+  }
   if (props.showClusterShapes) {
     aCtx.lineWidth = .8;
-    aCtx.strokeStyle = "#FFFFFF"
-    appSettings.basemapPolygons.forEach(polygon => {
-      aCtx.beginPath()
-      polygon.forEach((d,i) => {
-        if (i==0) {
-          aCtx.moveTo(x(d[0]), y(d[1]))
-        } else {
-          aCtx.lineTo(x(d[0]), y(d[1]))
-        }
-      })
-      aCtx.stroke()
-    })
+    aCtx.strokeStyle = "#286667"
+    appSettings.basemapPolygons.forEach(displayPolygons)
   }
   // Labels
   if (props.showClusterLabels) {
+    // Label lines
+    aCtx.lineWidth = .8;
+    aCtx.strokeStyle = "#286667"
+    appSettings.basemapLabelsLines.forEach(displayPolygons)
+
+    // Label text
     const yOffset = 6
-    aCtx.font = 'italic 18px sans-serif';
-    aCtx.lineWidth = 3;
+    aCtx.font = '300 22px "IBM Plex Serif", sans-serif';
+    aCtx.lineWidth = 4;
     aCtx.lineJoin = "round"
     aCtx.lineCap = "round"
     aCtx.strokeStyle = "#9ba7a9"
-    aCtx.fillStyle = "#FFFFFF";
+    aCtx.fillStyle = "#286667";
     appSettings.basemapLabels.forEach(d => {
       aCtx.textAlign = d.anchor || 'center';
       aCtx.strokeText(d.label, x(d.x), y(d.y)+yOffset);
