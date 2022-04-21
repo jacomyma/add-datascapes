@@ -270,7 +270,7 @@ const scopusSettings = {
   esDateField: "coredata.prism:coverDate",
   // basemap: "/add-datascape/scopus/data/Scopus basemap.csv",
   basemap: "/add-datascape/data/Scopus basemap.csv",
-  basemapNodeSizeRatio: 0.15,
+  basemapNodeSizeRatio: 0.1,
   basemapLabels: [],
   basemapLabelsLines: [],
   basemapPolygons: [

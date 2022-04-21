@@ -126,21 +126,28 @@ function updateBasemap() {
 }
 
 function updateHighlight() {
-  console.log("Update highlights");
-
   // Get data
   let neIndex = {};
   let max = 0;
+  let count = 0;
+  let total = 0;
   props.focusedEntities.forEach((entityObj) => {
     let score = entityObj.score;
     neIndex[entityObj.label.toLowerCase()] = score;
     max = Math.max(max, score)
+    total += score;
+    count++;
   });
 
+  const baseOpacity = 0.2;
+  const saturation = 1000; // At that point, light is too much...
+  const average = baseOpacity * total/(max*count);
+  const ratio1 = (average<0.3)?(0.3/average):(1);
+  const ratio2 = Math.min(1, saturation / (ratio1 * total / max));
   data.forEach((d) => {
     d.highlight = !!neIndex[d.Id];
     let score = neIndex[d.Id] || 0;
-    d.intensity = 0.2 * Math.max(0, Math.min(1, score/max));
+    d.intensity = Math.max(0, Math.min(1, ratio2 * ratio1 * baseOpacity * score/max));
   });
 
   const highlights = props.focusedEntities && props.focusedEntities.length > 0;
@@ -213,12 +220,12 @@ function updateHighlight() {
     );
 
     // Add dots (highlight)
-    hlCtx.fillStyle = "#FFF";
+    hlCtx.fillStyle = "#FFFFFFBB";
     data
       .filter((d) => d.highlight)
       .forEach((d) => {
         hlCtx.beginPath();
-        hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + 1, 0, 2 * Math.PI);
+        hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + .6, 0, 2 * Math.PI);
         hlCtx.fill();
       });
 
