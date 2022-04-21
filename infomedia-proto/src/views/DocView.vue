@@ -53,8 +53,8 @@ let emitEntity = ref(function (entity) {
 });
 
 onMounted(() => {
-  console.log("route", appSettings.esIndex + "/_doc/" + route.params.id);
-  fetchES(appSettings.esIndex + "/_doc/" + route.params.id)
+  let docId = route.params.id.replace(/·/gi,'.')
+  fetchES(appSettings.esIndex + "/_doc/" + docId)
     .then((response) => {
       console.log(response);
       doc.value = response;

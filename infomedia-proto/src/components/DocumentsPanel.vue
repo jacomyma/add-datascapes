@@ -39,16 +39,11 @@ let emitEntity = ref(function (entity) {
 });
 
 let openDoc = ref(function (id) {
-  console.log(
-    "ROUTWR",
-    router.resolve({
-      name: "doc",
-      params: { id: id },
-    })
-  );
+  // For some reason I don't get, the normal dot "." creates an issue.
+  // So we just replace it with a middle dot "·".
   const resolved = router.resolve({
     name: "doc",
-    params: { id: id },
+    params: { id: id.replace(/\./gi,'·') },
   });
   const targetUrl = resolved.href;
   console.log(targetUrl);

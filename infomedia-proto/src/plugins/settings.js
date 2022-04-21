@@ -7,6 +7,7 @@ const infomediaSettings = {
   esTitleField: "heading",
   esSourceField: "sourcename",
   esDateField: "publishdate",
+  // basemap: "/add-datascape/infomedia/data/Infomedia basemap.csv",
   basemap: "/add-datascape/data/Infomedia basemap.csv",
   basemapNodeSizeRatio: 1,
   basemapLabels: [
@@ -651,5 +652,5 @@ const scopusSettings = {
   ],
 };
 
-// export default scopusSettings;
-export default infomediaSettings;
+export default scopusSettings;
+// export default infomediaSettings;

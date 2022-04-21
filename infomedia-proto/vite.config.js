@@ -12,5 +12,6 @@ export default defineConfig({
     },
   },
   base: "/add-datascape/",
+  // base: '/add-datascape/infomedia/'
   // base: '/add-datascape/scopus/'
 });
