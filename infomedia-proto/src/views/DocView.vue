@@ -53,6 +53,8 @@ let emitEntity = ref(function (entity) {
 });
 
 onMounted(() => {
+  // We replace the middle dot by a normal dot
+  // (because the normal dot was creating an issue somehow)
   let docId = route.params.id.replace(/·/gi,'.')
   fetchES(appSettings.esIndex + "/_doc/" + docId)
     .then((response) => {
