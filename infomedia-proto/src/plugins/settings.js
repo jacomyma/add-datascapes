@@ -261,6 +261,7 @@ const infomediaSettings = {
 
 const scopusSettings = {
   title: "Scopus",
+  helpPage: "help-scopus",
   esIndex: "scopus",
   esTextField: "coredata.dc:description",
   esEntitiesField: "bmEntities",

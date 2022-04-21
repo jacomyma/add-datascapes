@@ -19,6 +19,11 @@ const router = createRouter({
       name: "help-infomedia",
       component: () => import("../views/HelpInfomedia.vue"),
     },
+    {
+      path: "/help-scopus",
+      name: "help-scopus",
+      component: () => import("../views/HelpScopus.vue"),
+    },
   ],
 });
 

@@ -109,7 +109,7 @@ main {
             👉🏿 Any word starting with "algorit"
             <br />
             <br />
-            <pre><code>facebook*</code></pre>
+            <pre><code>facebook?</code></pre>
             👉🏿 Finds "Facebook" as well as "Facebooks"
           </div>
         </div>
