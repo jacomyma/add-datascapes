@@ -74,7 +74,7 @@ const initQuery = function () {
     aggs: {
       "entities-agg": {
         terms: {
-          size: 100,
+          size: 10000,
           field: appSettings.esEntitiesField,
         },
       },
@@ -125,12 +125,12 @@ let loadBatch = ref(function () {
 
 let highlightEntities = ref(function (hoveredEntities) {
   if (hoveredEntities && hoveredEntities.length > 0) {
-    focusedEntities.value = hoveredEntities;
+    focusedEntities.value = hoveredEntities.map((e) => {return {label:e, score:1}});
   } else {
     if (query.value == "") {
       focusedEntities.value = [];
     } else {
-      focusedEntities.value = entitiesFetched.value.map((d) => d.key);
+      focusedEntities.value = entitiesFetched.value.map((d) => {return {label:d.key, score:d.doc_count}});
     }
   }
 });

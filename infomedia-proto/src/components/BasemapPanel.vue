@@ -17,6 +17,8 @@
   </div>
 </template>
 
+
+
 <style>
 #basemap-container {
   position: relative;
@@ -40,6 +42,8 @@
   display: none;
 }
 </style>
+
+
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from "vue";
@@ -126,12 +130,17 @@ function updateHighlight() {
 
   // Get data
   let neIndex = {};
-  props.focusedEntities.forEach((entity) => {
-    neIndex[entity.toLowerCase()] = true;
+  let max = 0;
+  props.focusedEntities.forEach((entityObj) => {
+    let score = entityObj.score;
+    neIndex[entityObj.label.toLowerCase()] = score;
+    max = Math.max(max, score)
   });
 
   data.forEach((d) => {
     d.highlight = !!neIndex[d.Id];
+    let score = neIndex[d.Id] || 0;
+    d.intensity = 0.2 * Math.max(0, Math.min(1, score/max));
   });
 
   const highlights = props.focusedEntities && props.focusedEntities.length > 0;
@@ -178,10 +187,10 @@ function updateHighlight() {
 
   if (highlights) {
     // Add dots (highlight halo)
-    hlCtx.fillStyle = "rgba(255,255,255,.2)";
     data
       .filter((d) => d.highlight)
       .forEach((d) => {
+        hlCtx.fillStyle = "rgba(255,255,255,"+d.intensity+")";
         hlCtx.beginPath();
         hlCtx.arc(
           x(d.x),
