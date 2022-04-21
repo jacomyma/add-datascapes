@@ -11,6 +11,6 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
-  base: '/add-datascape/'
-  // base: '/gh/add-datascapes/infomedia-proto/dist/'
+  base: "/add-datascape/",
+  // base: '/add-datascape/scopus/'
 });
