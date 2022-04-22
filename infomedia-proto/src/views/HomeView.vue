@@ -20,6 +20,7 @@ let focusedEntities = ref([]);
 const showEntitiesLabels = ref(true);
 const showClusterShapes = ref(true);
 const showClusterLabels = ref(true);
+const quickButUgly = ref(false);
 
 const fetchES = function (route, params) {
   // const username = 'elastic'
@@ -203,6 +204,14 @@ main {
               />
               Show cluster labels
             </label>
+            <label for="quick-but-ugly" style="padding: 6px">
+              <input
+                type="checkbox"
+                id="quick-but-ugly"
+                v-model="quickButUgly"
+              />
+              Quick & dirty
+            </label>
           </fieldset>
         </form>
       </div>
@@ -212,6 +221,7 @@ main {
           :show-labels="showEntitiesLabels"
           :show-cluster-shapes="showClusterShapes"
           :show-cluster-labels="showClusterLabels"
+          :quick-but-ugly="quickButUgly"
         />
       </div>
     </div>

@@ -56,6 +56,7 @@ const props = defineProps({
   showLabels: Boolean,
   showClusterShapes: Boolean,
   showClusterLabels: Boolean,
+  quickButUgly: Boolean,
 });
 
 const NECoordinates = ref({});
@@ -94,6 +95,7 @@ watch(() => props.focusedEntities, updateHighlight);
 watch(() => props.showLabels, updateHighlight);
 watch(() => props.showClusterLabels, updateBackground);
 watch(() => props.showClusterShapes, updateBackground);
+watch(() => props.quickButUgly, updateBasemap);
 
 function updateBasemap() {
   console.log(
@@ -210,24 +212,28 @@ function updateHighlight() {
       });
 
     // Blur!
-    StackBlur.canvasRGBA(
-      hlCtx.canvas,
-      0,
-      0,
-      hlCtx.canvas.width,
-      hlCtx.canvas.height,
-      hlCtx.canvas.width / 50
-    );
+    if (!props.quickButUgly) {
+      StackBlur.canvasRGBA(
+        hlCtx.canvas,
+        0,
+        0,
+        hlCtx.canvas.width,
+        hlCtx.canvas.height,
+        hlCtx.canvas.width / 50
+      );
+    }
 
     // Add dots (highlight)
     hlCtx.fillStyle = "#FFFFFFBB";
-    data
-      .filter((d) => d.highlight)
-      .forEach((d) => {
-        hlCtx.beginPath();
-        hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + .6, 0, 2 * Math.PI);
-        hlCtx.fill();
-      });
+    if (!props.quickButUgly) {
+      data
+        .filter((d) => d.highlight)
+        .forEach((d) => {
+          hlCtx.beginPath();
+          hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + .6, 0, 2 * Math.PI);
+          hlCtx.fill();
+        });
+    }
 
     // Order nodes for labels
     orderedNodes = data.filter((d) => d.highlight);
@@ -249,22 +255,23 @@ function updateHighlight() {
     lCtx.fillStyle = "#000000";
   }
 
-  // Order nodes! (to display labels)
-  orderedNodes.sort(function (a, b) {
-    if (a.showlabel) {
-      if (b.showlabel) {
-        return b.size - a.size;
-      } else return -1;
-    } else {
-      if (b.showlabel) {
-        return 1;
-      } else return b.size - a.size;
-    }
-  });
-
   // Display labels
   const yOffset = 8;
   if (props.showLabels) {
+
+    // Order nodes! (to display labels)
+    orderedNodes.sort(function (a, b) {
+      if (a.showlabel) {
+        if (b.showlabel) {
+          return b.size - a.size;
+        } else return -1;
+      } else {
+        if (b.showlabel) {
+          return 1;
+        } else return b.size - a.size;
+      }
+    });
+
     const fontSize = 12;
     const boxMargin = 6;
     const labelsToConsider = 1000;
@@ -381,14 +388,16 @@ function updateBackground() {
   });
 
   // Blur!
-  StackBlur.canvasRGB(
-    bgCtx.canvas,
-    0,
-    0,
-    bgCtx.canvas.width,
-    bgCtx.canvas.height,
-    bgCtx.canvas.width / 128
-  );
+  if (!props.quickButUgly) {
+    StackBlur.canvasRGB(
+      bgCtx.canvas,
+      0,
+      0,
+      bgCtx.canvas.width,
+      bgCtx.canvas.height,
+      bgCtx.canvas.width / 128
+    );
+  }
 
   // Annotations
   // Polygons & lines
