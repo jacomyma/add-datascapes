@@ -653,5 +653,5 @@ const scopusSettings = {
   ],
 };
 
-export default scopusSettings;
-// export default infomediaSettings;
+// export default scopusSettings;
+export default infomediaSettings;

@@ -42,14 +42,14 @@ let emitDoc = ref(function (doc) {
     doc._source &&
     get.value(doc._source, appSettings.esEntitiesField)
   ) {
-    focusedEntities.value = get.value(doc._source, appSettings.esEntitiesField);
+    focusedEntities.value = get.value(doc._source, appSettings.esEntitiesField).map((e) => {return {label:e, score:1}});
   } else {
     focusedEntities.value = [];
   }
 });
 
 let emitEntity = ref(function (entity) {
-  focusedEntities.value = [entity];
+  focusedEntities.value = [{label:entity, score:1}];
 });
 
 onMounted(() => {
@@ -63,7 +63,7 @@ onMounted(() => {
       focusedEntities.value = get.value(
         doc.value._source,
         appSettings.esEntitiesField
-      );
+      ).map((e) => {return {label:e, score:1}});
       loaded.value = true;
     })
     .catch((err) => {
