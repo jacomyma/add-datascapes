@@ -11,7 +11,6 @@ const infomediaSettings = {
   basemap: "/add-datascape/data/Infomedia basemap.csv",
   basemapNodeSizeRatio: 1,
   basemapLabels: [
-    // {x:0, y:0, anchor:'center', label:"Origin (test label annotation)"}
     { x: 256, y: 1058, anchor: "left", label: "European politics" },
     { x: 602, y: 907, anchor: "left", label: "International conflict" },
     { x: 892, y: 408, anchor: "left", label: "American politics" },
@@ -271,8 +270,39 @@ const scopusSettings = {
   // basemap: "/add-datascape/scopus/data/Scopus basemap.csv",
   basemap: "/add-datascape/data/Scopus basemap.csv",
   basemapNodeSizeRatio: 0.1,
-  basemapLabels: [],
-  basemapLabelsLines: [],
+  basemapLabels: [
+    { x: 3446, y: 2082, anchor: "left", label: "Genetics" },
+    { x: 3399, y: 1508, anchor: "left", label: "Tools" },
+    { x: 3912, y: 406, anchor: "left", label: "Repro. medicine" },
+    { x: 3353, y: -91, anchor: "left", label: "Microbes & Pathogens" },
+    { x: 3368, y: -1146, anchor: "left", label: "Remote sensing" },
+    { x: 2313, y: -3319, anchor: "left", label: "Weather forecasting" },
+    { x: 1087, y: -3832, anchor: "left", label: "Climatology & oceanography" },
+    { x: 466, y: -4344, anchor: "center", label: "Measuring the cosmos" },
+    { x: -760, y: -3723, anchor: "right", label: "Physics" },
+    { x: -2406, y: -3211, anchor: "right", label: "Quantum technology" },
+    { x: -1241, y: -2093, anchor: "center", label: "Mathematics" },
+    { x: -3694, y: -1038, anchor: "right", label: "Energy sys. manag." },
+    { x: -3352, y: 1058, anchor: "right", label: "Networks & signal p." },
+    { x: -714, y: 576, anchor: "center", label: "Social data science" },
+    { x: -2747, y: 2253, anchor: "right", label: "Computer vision" },
+    { x: -1226, y: 3712, anchor: "right", label: "Radiotherapy" },
+    { x: -93, y: 4177, anchor: "right", label: "Ophthalmology" },
+    { x: 155, y: 4659, anchor: "center", label: "Orthopedic surgery" },
+    { x: 1552, y: 3789, anchor: "center", label: "Oncology" },
+    { x: 2748, y: 3820, anchor: "left", label: "Diabetes" },
+  ],
+  basemapLabelsLines: [
+    [ // Reproductive medicine
+      [1925,1477],[3834,406]
+    ],[ // Climatology & oceanography
+      [1289,-2900],[1289,-3614]
+    ],[ // Orthopedic surgery
+      [187,2594],[187,4519]
+    ],[ // Diabetes
+      [1925,2455],[2934,3650]
+    ]
+  ],
   basemapPolygons: [
     [
       // Radiotherapy
@@ -653,5 +683,5 @@ const scopusSettings = {
   ],
 };
 
-// export default scopusSettings;
-export default infomediaSettings;
+export default scopusSettings;
+// export default infomediaSettings;
