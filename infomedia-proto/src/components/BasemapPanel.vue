@@ -144,8 +144,8 @@ function updateHighlight() {
   const ratio2 = Math.min(1, saturation / (ratio1 * total / max));
   data.forEach((d) => {
     d.highlight = !!neIndex[d.Id];
-    let score = neIndex[d.Id] || 0;
-    d.intensity = Math.max(0, Math.min(1, ratio2 * ratio1 * baseOpacity * score/max));
+    d.score = neIndex[d.Id] || 0;
+    d.intensity = Math.max(0, Math.min(1, ratio2 * ratio1 * baseOpacity * d.score/max));
   });
 
   const highlights = props.highlights; //props.focusedEntities && props.focusedEntities.length > 0;
@@ -280,18 +280,18 @@ function updateHighlight() {
     orderedNodes.sort(function (a, b) {
       if (a.showlabel) {
         if (b.showlabel) {
-          return b.size - a.size;
+          return b.score-a.score || b.size - a.size;
         } else return -1;
       } else {
         if (b.showlabel) {
           return 1;
-        } else return b.size - a.size;
+        } else return b.score-a.score || b.size - a.size;
       }
     });
 
     const fontSize = 12;
     const boxMargin = 6;
-    const labelsToConsider = 1000;
+    const labelsToConsider = props.quickButUgly?150:10000;
     lCtx.font = fontSize + 'px "Nunito", serif';
     lCtx.textAlign = "center";
     lCtx.lineWidth = 4;
