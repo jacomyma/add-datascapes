@@ -195,24 +195,38 @@ function updateHighlight() {
   let orderedNodes;
 
   if (highlights) {
-    // Add dots (highlight halo)
-    data
-      .filter((d) => d.highlight)
-      .forEach((d) => {
-        hlCtx.fillStyle = "rgba(255,255,255,"+d.intensity+")";
-        hlCtx.beginPath();
-        hlCtx.arc(
-          x(d.x),
-          y(d.y),
-          sizeRatio * d.size + nodeSizeOffset,
-          0,
-          2 * Math.PI
-        );
-        hlCtx.fill();
-      });
+    if (props.quickButUgly) {
+      // Add dots (highlight halo)
+      data
+        .filter((d) => d.highlight)
+        .forEach((d) => {
+          let halfsize = sizeRatio * d.size + 1.2 * nodeSizeOffset
+          hlCtx.fillStyle = "rgba(255,255,255,"+(0.5 * d.intensity)+")";
+          hlCtx.fillRect(
+            x(d.x) - halfsize,
+            y(d.y) - halfsize,
+            2 * halfsize,
+            2 * halfsize,
+          )
+        });
+    } else {
+      // Add dots (highlight halo)
+      data
+        .filter((d) => d.highlight)
+        .forEach((d) => {
+          hlCtx.fillStyle = "rgba(255,255,255,"+d.intensity+")";
+          hlCtx.beginPath();
+          hlCtx.arc(
+            x(d.x),
+            y(d.y),
+            sizeRatio * d.size + nodeSizeOffset,
+            0,
+            2 * Math.PI
+          );
+          hlCtx.fill();
+        });
 
-    // Blur!
-    if (!props.quickButUgly) {
+      // Blur!
       StackBlur.canvasRGBA(
         hlCtx.canvas,
         0,
@@ -221,11 +235,9 @@ function updateHighlight() {
         hlCtx.canvas.height,
         hlCtx.canvas.width / 50
       );
-    }
 
-    // Add dots (highlight)
-    hlCtx.fillStyle = "#FFFFFFBB";
-    if (!props.quickButUgly) {
+      // Add dots (highlight)
+      hlCtx.fillStyle = "#FFFFFFBB";
       data
         .filter((d) => d.highlight)
         .forEach((d) => {
@@ -240,14 +252,23 @@ function updateHighlight() {
     lCtx.strokeStyle = "#999785";
     lCtx.fillStyle = "#FFFFFF";
   } else {
-    // No highlights: just show the dots
-    // Add dots (highlight)
-    hlCtx.fillStyle = "#766e6c";
-    data.forEach((d) => {
-      hlCtx.beginPath();
-      hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + 0.5, 0, 2 * Math.PI);
-      hlCtx.fill();
-    });
+    if (props.quickButUgly) {
+      // No highlights: just show the dots
+      // Add dots (highlight)
+      hlCtx.fillStyle = "#766e6c";
+      data.forEach((d) => {
+        hlCtx.fillRect(x(d.x), y(d.y), 2 * (sizeRatio * d.size + 0.5), 2 * (sizeRatio * d.size + 0.5));
+      });
+    } else {
+      // No highlights: just show the dots
+      // Add dots (highlight)
+      hlCtx.fillStyle = "#766e6c";
+      data.forEach((d) => {
+        hlCtx.beginPath();
+        hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + 0.5, 0, 2 * Math.PI);
+        hlCtx.fill();
+      });      
+    }
 
     // Order nodes for labels
     orderedNodes = data.filter(() => true);
