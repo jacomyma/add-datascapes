@@ -390,8 +390,8 @@ function updateHighlight() {
     // console.log(window.polygon.join(","));
 
     // Browse the entities nearby
-    // Goal: pick the closest entity if it's close enough
-    // only looking at those highlighted (unless no highlight)
+    // Goal: pick the closest entity, only looking
+    // at those highlighted (unless no highlight)
     let closest = false
     let closestDistance2 = Infinity
     orderedNodes.forEach(d => {
