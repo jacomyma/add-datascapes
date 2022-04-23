@@ -60,6 +60,8 @@ const props = defineProps({
   highlights: Boolean,
 });
 
+const emit = defineEmits(["query"]);
+
 const NECoordinates = ref({});
 let data;
 
@@ -384,8 +386,26 @@ function updateHighlight() {
     let X = Math.round(sizing.x.invert(mouseX));
     let Y = Math.round(sizing.y.invert(mouseY));
     // TODO: remove me
-    window.polygon.push("[" + X + "," + Y + "]");
-    console.log(window.polygon.join(","));
+    // window.polygon.push("[" + X + "," + Y + "]");
+    // console.log(window.polygon.join(","));
+
+    // Browse the entities nearby
+    // Goal: pick the closest entity if it's close enough
+    // only looking at those highlighted (unless no highlight)
+    let closest = false
+    let closestDistance2 = Infinity
+    orderedNodes.forEach(d => {
+      if (!props.highlights || d.score > 0) {
+        let d2 = Math.pow(X-d.x, 2) + Math.pow(Y-d.y, 2)
+        if (d2 < closestDistance2) {
+          closest = d
+          closestDistance2 = d2
+        }
+      }
+    })
+    let d = Math.sqrt(closestDistance2)
+    emit("query", closest.label)
+
   });
 
   // Cache

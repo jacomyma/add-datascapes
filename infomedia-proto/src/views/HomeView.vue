@@ -179,7 +179,7 @@ main {
           justify-content: center;
         "
       >
-        <queryField @query="(q) => (query = q)" />
+        <queryField @query="(q) => (query = q)" :query="query"/>
       </div>
       <div style="padding: 6px">
         <form class="pure-form">
@@ -227,6 +227,7 @@ main {
           :show-cluster-shapes="showClusterShapes"
           :show-cluster-labels="showClusterLabels"
           :quick-but-ugly="quickButUgly"
+          @query="(q) => (query = q)"
         />
       </div>
     </div>

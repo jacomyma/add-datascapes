@@ -1,10 +1,16 @@
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import appSettings from "../plugins/settings";
 
 const emit = defineEmits(["query"]);
 
 const query = ref("");
+
+const props = defineProps({
+  query: String
+})
+
+watch(() => props.query, function(){ query.value = props.query });
 
 function validate() {
   emit("query", query.value);
