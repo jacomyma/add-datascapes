@@ -336,7 +336,7 @@ function updateHighlight() {
         if (cap <= 0) {
           return;
         }
-        const label = d.Id;
+        const label = d.label;
         // Bounding box
         const box = lCtx.measureText(label);
         const w = box.width + 2 * boxMargin;
