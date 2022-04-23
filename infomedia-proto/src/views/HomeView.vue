@@ -89,7 +89,7 @@ const initQuery = function () {
 
   fetchES(appSettings.esIndex + "/_search/", body)
     .then((response) => {
-      console.log(response);
+      console.log("Response:", response);
       docsFetched.value = response.hits.hits;
       if (
         response.aggregations &&
@@ -109,7 +109,7 @@ const initQuery = function () {
 
 let loadBatch = ref(function () {
   // Load one more batch
-  fetchES("infomedia/_search/", {
+  fetchES(appSettings.esIndex + "/_search/", {
     from: docDisplayCount.value,
     size: docDisplayBatch.value,
     query: buildQueryObject(),
