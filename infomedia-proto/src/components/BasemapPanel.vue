@@ -176,7 +176,7 @@ function updateHighlight() {
     d.intensity = Math.max(0, Math.min(1, ratio2 * ratio1 * baseOpacity * d.score/max));
   });
 
-  const highlights = props.highlights; //props.focusedEntities && props.focusedEntities.length > 0;
+  const highlights = props.highlights;
 
   const margin = sizing.margin;
   const width = sizing.width;
@@ -366,6 +366,15 @@ function updateHighlight() {
           lCtx.fillText(label, x(d.x), y(d.y) + yOffset);
         }
       });
+  }
+
+  // Display message if no entities in the basemap
+  if (props.highlights && props.focusedEntities.length == 0) {
+    lCtx.textAlign = "left";
+    const message = "No entity to display"
+    const msgX = 20
+    const msgY = height + margin.top + margin.bottom - 20
+    lCtx.fillText(message, msgX, msgY);
   }
 
   // Bind mouse stuff
