@@ -123,7 +123,35 @@ function updateBasemap() {
   };*/
 }
 
+let cacheData = []
+
 function updateHighlight() {
+  const sizing = getSizing();
+
+  // CACHE
+  const signatureElements = {
+    h: props.highlights,
+    e: props.focusedEntities,
+    l: props.showLabels,
+    u: props.quickButUgly,
+    s: sizing,
+  }
+  const signature = hashObject(signatureElements)
+  const retrieved = caching.retrieve("highlight", signature);
+  if (retrieved) {
+    let hlCanvas = d3.select("#basemap-container canvas.hlCanvas")
+    let hlCtx = hlCanvas.node().getContext("2d");
+    hlCtx.putImageData(retrieved.hl, 0, 0)
+    let lbCanvas = d3.select("#basemap-container canvas.lbCanvas")
+    let lbCtx = lbCanvas.node().getContext("2d");
+    lbCtx.putImageData(retrieved.lb, 0, 0)
+    let lCanvas = d3.select("#basemap-container canvas.lCanvas")
+    let lCtx = lCanvas.node().getContext("2d");
+    lCtx.putImageData(retrieved.l, 0, 0)
+
+    return
+  }
+
   // Get data
   let neIndex = {};
   let max = 0;
@@ -150,7 +178,6 @@ function updateHighlight() {
 
   const highlights = props.highlights; //props.focusedEntities && props.focusedEntities.length > 0;
 
-  const sizing = getSizing();
   const margin = sizing.margin;
   const width = sizing.width;
   const height = sizing.height;
@@ -351,7 +378,60 @@ function updateHighlight() {
     window.polygon.push("[" + X + "," + Y + "]");
     console.log(window.polygon.join(","));
   });
+
+  // Cache
+  const dataToCache = {
+    hl: hlCtx.getImageData(0, 0, hlCtx.canvas.width, hlCtx.canvas.height),
+    lb: lbCtx.getImageData(0, 0, lbCtx.canvas.width, lbCtx.canvas.height),
+    l: lCtx.getImageData(0, 0, lCtx.canvas.width, lCtx.canvas.height),
+  }
+  caching.store("highlight", signature, dataToCache)
 }
+
+const caching = (function(){
+  let ns = {};
+  ns.stores = {}
+  ns.maxStoreSize = 25;
+
+  ns.store = function(store, signature, dataToCache) {
+    if (ns.stores[store] === undefined) {
+      ns.stores[store] = {}
+    }
+    let s = ns.stores[store]
+    s[signature] = {
+      ts: Date.now(),
+      data: dataToCache
+    }
+
+    // Check size
+    let size = Object.keys(s).length
+    if (size > ns.maxStoreSize) {
+      // Delete oldest element
+      let ts = Infinity
+      let oldestKey = false
+      for (let signature in s) {
+        if (s[signature].ts < ts) {
+          ts = s[signature].ts
+          oldestKey = signature
+        }
+      }
+      delete s[oldestKey]
+    }
+  }
+
+  ns.retrieve = function(store, signature) {
+    if (ns.stores[store]) {
+      let s = ns.stores[store]
+      if (s[signature] !== undefined) {
+        s[signature].ts = Date.now()
+        return s[signature].data
+      }
+    }
+    return false
+  }
+
+  return ns;
+})();
 
 function updateBackground() {
   window.polygon = []; // TODO: remove me
@@ -512,5 +592,20 @@ function getSizing() {
   ns.sizeRatio = appSettings.basemapNodeSizeRatio * 0.3;
 
   return ns;
+}
+
+function hashObject(obj) {
+  const txt = JSON.stringify(obj);
+  return hashCode(txt);
+}
+
+function hashCode(txt) {
+  let hash = 0;
+  for (let i = 0; i < txt.length; i++) {
+      let char = txt.charCodeAt(i);
+      hash = ((hash<<5)-hash)+char;
+      hash = hash & hash; // Convert to 32bit integer
+  }
+  return hash;
 }
 </script>
