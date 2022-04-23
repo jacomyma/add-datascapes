@@ -154,7 +154,8 @@ main {
     <div
       class="documents-panel"
       style="
-        width: 600px;
+        min-width: 600px;
+        max-width: 600px;
         display: flex;
         flex-direction: column;
         align-items: stretch;
