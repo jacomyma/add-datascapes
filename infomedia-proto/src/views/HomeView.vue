@@ -210,7 +210,7 @@ main {
                 id="quick-but-ugly"
                 v-model="quickButUgly"
               />
-              Ugly reactive
+              Ugly efficient
             </label>
           </fieldset>
         </form>
