@@ -37,7 +37,7 @@ let emitDoc = ref(function (doc) {
 });
 
 let emitEntity = ref(function (entity) {
-  emit("focusedEntities", {highlight:false, entities:[entity]});
+  emit("focusedEntities", {highlight:true, entities:[entity]});
 });
 
 let openDoc = ref(function (id) {
