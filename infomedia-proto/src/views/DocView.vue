@@ -12,6 +12,7 @@ const showClusterLabels = ref(true);
 const loaded = ref(false);
 const doc = ref({});
 const focusedEntities = ref([]);
+const quickButUgly = ref(false);
 
 // Note: this is for templating, so that we write JSON paths as strings in the settings
 const get = ref((t, path) => path.split(".").reduce((r, k) => r?.[k], t));
@@ -125,6 +126,14 @@ main {
               />
               Show cluster labels
             </label>
+            <label for="quick-but-ugly" style="padding: 6px">
+              <input
+                type="checkbox"
+                id="quick-but-ugly"
+                v-model="quickButUgly"
+              />
+              Ugly efficient
+            </label>
           </fieldset>
         </form>
       </div>
@@ -137,6 +146,7 @@ main {
           :show-labels="showEntitiesLabels"
           :show-cluster-shapes="showClusterShapes"
           :show-cluster-labels="showClusterLabels"
+          :quick-but-ugly="quickButUgly"
         />
       </div>
     </div>
