@@ -57,6 +57,7 @@ const props = defineProps({
   showClusterShapes: Boolean,
   showClusterLabels: Boolean,
   quickButUgly: Boolean,
+  highlights: Boolean,
 });
 
 const NECoordinates = ref({});
@@ -91,18 +92,13 @@ onUnmounted(() => {
   window.removeEventListener("resize", updateBasemap);
 });
 
-watch(() => props.focusedEntities, updateHighlight);
+watch(() => [props.focusedEntities, props.highlights], updateHighlight);
 watch(() => props.showLabels, updateHighlight);
 watch(() => props.showClusterLabels, updateBackground);
 watch(() => props.showClusterShapes, updateBackground);
 watch(() => props.quickButUgly, updateBasemap);
 
 function updateBasemap() {
-  console.log(
-    "Update basemap. Entities:",
-    (props.focusedEntities || []).length
-  );
-
   updateBackground();
   updateHighlight();
 
@@ -152,7 +148,7 @@ function updateHighlight() {
     d.intensity = Math.max(0, Math.min(1, ratio2 * ratio1 * baseOpacity * score/max));
   });
 
-  const highlights = props.focusedEntities && props.focusedEntities.length > 0;
+  const highlights = props.highlights; //props.focusedEntities && props.focusedEntities.length > 0;
 
   const sizing = getSizing();
   const margin = sizing.margin;
@@ -358,7 +354,6 @@ function updateHighlight() {
 }
 
 function updateBackground() {
-  console.log("Update background");
   window.polygon = []; // TODO: remove me
 
   const sizing = getSizing();

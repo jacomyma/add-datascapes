@@ -61,10 +61,10 @@ onMounted(() => {
     .then((response) => {
       console.log(response);
       doc.value = response;
-      focusedEntities.value = get.value(
+      focusedEntities.value = (get.value(
         doc.value._source,
         appSettings.esEntitiesField
-      ).map((e) => {return {label:e, score:1}});
+      ) || []).map((e) => {return {label:e, score:1}});
       loaded.value = true;
     })
     .catch((err) => {
@@ -142,6 +142,7 @@ main {
         v-if="loaded"
       >
         <basemapPanel
+          :highlights="true"
           :focused-entities="focusedEntities"
           :show-labels="showEntitiesLabels"
           :show-cluster-shapes="showClusterShapes"

@@ -15,6 +15,7 @@ let loaded = ref(false);
 let query = ref("");
 let docDisplayBatch = ref(25);
 let docDisplayCount = ref(0);
+let entitiesHighlight = ref(false);
 let focusedEntities = ref([]);
 
 const showEntitiesLabels = ref(true);
@@ -99,7 +100,7 @@ const initQuery = function () {
       }
       loaded.value = true;
       docsTotal.value = response.hits.total.value;
-      highlightEntities.value();
+      highlightEntities.value({highlight:false, entities:[]});
     })
     .catch((err) => {
       console.warn(err);
@@ -124,14 +125,17 @@ let loadBatch = ref(function () {
     });
 });
 
-let highlightEntities = ref(function (hoveredEntities) {
-  if (hoveredEntities && hoveredEntities.length > 0) {
-    focusedEntities.value = hoveredEntities.map((e) => {return {label:e, score:1}});
+let highlightEntities = ref(function (obj) {
+  if (obj.highlight) {
+    focusedEntities.value = obj.entities.map((e) => {return {label:e, score:1}});
+    entitiesHighlight.value = true
   } else {
     if (query.value == "") {
       focusedEntities.value = [];
+      entitiesHighlight.value = false
     } else {
       focusedEntities.value = entitiesFetched.value.map((d) => {return {label:d.key, score:d.doc_count}});
+      entitiesHighlight.value = true
     }
   }
 });
@@ -218,6 +222,7 @@ main {
       <div style="background-color: #000; flex-grow: 1; display: flex">
         <basemapPanel
           :focused-entities="focusedEntities"
+          :highlights="entitiesHighlight"
           :show-labels="showEntitiesLabels"
           :show-cluster-shapes="showClusterShapes"
           :show-cluster-labels="showClusterLabels"

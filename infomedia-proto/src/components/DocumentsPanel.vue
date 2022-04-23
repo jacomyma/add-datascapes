@@ -22,20 +22,22 @@ const get = ref((t, path) => path.split(".").reduce((r, k) => r?.[k], t));
 let emitDoc = ref(function (doc) {
   if (
     doc &&
-    doc._source &&
-    get.value(doc._source, appSettings.esEntitiesField)
+    doc._source
   ) {
     emit(
       "focusedEntities",
-      get.value(doc._source, appSettings.esEntitiesField)
+      {
+        highlight:true,
+        entities:(get.value(doc._source, appSettings.esEntitiesField) || [])
+      }
     );
   } else {
-    emit("focusedEntities", []);
+    emit("focusedEntities", {highlight:false, entities:[]});
   }
 });
 
 let emitEntity = ref(function (entity) {
-  emit("focusedEntities", [entity]);
+  emit("focusedEntities", {highlight:false, entities:[entity]});
 });
 
 let openDoc = ref(function (id) {
