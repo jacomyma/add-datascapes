@@ -280,14 +280,14 @@ function updateHighlight() {
     if (props.quickButUgly) {
       // No highlights: just show the dots
       // Add dots (highlight)
-      hlCtx.fillStyle = "#766e6c";
+      hlCtx.fillStyle = "#6c655e";
       data.forEach((d) => {
         hlCtx.fillRect(x(d.x), y(d.y), 2 * (sizeRatio * d.size + 0.5), 2 * (sizeRatio * d.size + 0.5));
       });
     } else {
       // No highlights: just show the dots
       // Add dots (highlight)
-      hlCtx.fillStyle = "#766e6c";
+      hlCtx.fillStyle = "#6c655e";
       data.forEach((d) => {
         hlCtx.beginPath();
         hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + 0.5, 0, 2 * Math.PI);
@@ -493,27 +493,89 @@ function updateBackground() {
   aCtx.scale(2, 2);
 
   let bgCtx = bgCanvas.node().getContext("2d");
-  bgCtx.fillStyle = "#9ba7a9";
-  bgCtx.fillRect(0, 0, bgCtx.canvas.width, bgCtx.canvas.height);
 
-  // Add dots background
-  bgCtx.fillStyle = "#999785";
-  data.forEach((d) => {
-    bgCtx.beginPath();
-    bgCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + nodeMargin, 0, 2 * Math.PI);
-    bgCtx.fill();
-  });
+  if (props.quickButUgly) {
+    bgCtx.fillStyle = "#9ba7a9";
+    bgCtx.fillRect(0, 0, bgCtx.canvas.width, bgCtx.canvas.height);
 
-  // Add dots
-  bgCtx.fillStyle = "#615e5b";
-  data.forEach((d) => {
-    bgCtx.beginPath();
-    bgCtx.arc(x(d.x), y(d.y), sizeRatio * d.size, 0, 2 * Math.PI);
-    bgCtx.fill();
-  });
+    // Add dots background (squares)
+    bgCtx.fillStyle = "#999785";
+    data.forEach((d) => {
+      let halfsize = sizeRatio * d.size + nodeMargin
+      bgCtx.fillRect(
+        x(d.x) - halfsize,
+        y(d.y) - halfsize,
+        2 * halfsize,
+        2 * halfsize,
+      )
+    });
 
-  // Blur!
-  if (!props.quickButUgly) {
+    // Add dots (squares)
+    bgCtx.fillStyle = "#504132";
+    data.forEach((d) => {
+      let halfsize = sizeRatio * d.size
+      bgCtx.fillRect(
+        x(d.x) - halfsize,
+        y(d.y) - halfsize,
+        2 * halfsize,
+        2 * halfsize,
+      )
+    });
+  } else {
+    // Heat map
+    bgCtx.fillStyle = "#000000";
+    bgCtx.fillRect(0, 0, bgCtx.canvas.width, bgCtx.canvas.height);
+    bgCtx.fillStyle = "rgba(255,255,255)";
+    data.forEach((d) => {
+      bgCtx.beginPath();
+      bgCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + appSettings.heatmapSpread, 0, 2 * Math.PI);
+      bgCtx.fill();
+    });
+    StackBlur.canvasRGB(
+      bgCtx.canvas,
+      0,
+      0,
+      bgCtx.canvas.width,
+      bgCtx.canvas.height,
+      bgCtx.canvas.width / 32
+    );
+
+    // Compute hillshading from there
+    const hsData = computeHillshading(bgCtx.getImageData(0, 0, bgCtx.canvas.width, bgCtx.canvas.height))
+
+    // Color
+    bgCtx.fillStyle = "#9ba7a9";
+    bgCtx.fillRect(0, 0, bgCtx.canvas.width, bgCtx.canvas.height);
+
+    
+    // Add dots background
+    bgCtx.fillStyle = "#999785";
+    data.forEach((d) => {
+      bgCtx.beginPath();
+      bgCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + nodeMargin, 0, 2 * Math.PI);
+      bgCtx.fill();
+    });
+
+    // Add dots
+    bgCtx.fillStyle = "#504132";
+    data.forEach((d) => {
+      bgCtx.beginPath();
+      bgCtx.arc(x(d.x), y(d.y), sizeRatio * d.size, 0, 2 * Math.PI);
+      bgCtx.fill();
+    });
+
+    // Apply hillshading
+    const lGradient = l => Math.pow(Math.max(0, .2+.8*Math.min(1, 1.4*l||0)), .6)
+    let imgd = bgCtx.getImageData(0, 0, bgCtx.canvas.width, bgCtx.canvas.height)
+    for (let I=0; I<imgd.data.length; I+=4) {
+      const l = hsData[I/4]
+      imgd.data[I  ] = Math.floor(imgd.data[I  ]*(.85+.15*lGradient(l)))
+      imgd.data[I+1] = Math.floor(imgd.data[I+1]*(.85+.15*lGradient(l)))
+      imgd.data[I+2] = Math.floor(imgd.data[I+2]*(.85+.15*lGradient(l)))
+    }
+    bgCtx.putImageData(imgd, 0, 0)
+
+    // Blur!
     StackBlur.canvasRGB(
       bgCtx.canvas,
       0,
@@ -636,5 +698,47 @@ function hashCode(txt) {
       hash = hash & hash; // Convert to 32bit integer
   }
   return hash;
+}
+
+function computeHillshading(imgd) {
+  let options = {}
+  options.elevation_strength = 0.0007
+  options.hillshading_sun_azimuth = Math.PI * 0.8 // angle in radians
+  options.hillshading_sun_elevation = Math.PI * 0.3 // angle in radians
+
+  const width = imgd.width
+  const height = imgd.height
+  let lPixelMap = new Float64Array((width+1) * (height+1))
+  
+  // Hillshading formulas from https://observablehq.com/@sahilchinoy/hillshader
+  const getSlope = (dzdx, dzdy, z=.2) => Math.atan(z * Math.sqrt(dzdx ** 2 + dzdy ** 2)); // the z factor controls how exaggerated the peaks look
+  const getAspect = (dzdx, dzdy) => { return Math.atan2(-dzdy, -dzdx); }
+  const getReflectance = function(aspect, slope, sunAzimuth, sunElevation) {
+    return Math.cos(Math.PI - aspect - sunAzimuth) * Math.sin(slope) * Math.sin(Math.PI * .5 - sunElevation) + 
+      Math.cos(slope) * Math.cos(Math.PI * .5 - sunElevation);
+  }
+  for (let I=0; I<imgd.data.length; I+=4) {
+    // We search the indexes of pixels on the left, right, top and bottom.
+    // If on border, we use the central pixel instead.
+    const h = imgd.data[I]
+    const i = I/4
+    const x = i%(width+1)
+    const y = (i-x)/(width+1)
+    const i_left = (i%(width+1) == 0) ? (i) : (i-1)
+    const i_right = (i%(width+1) == (width+1) - 1) ? (i) : (i+1)
+    const i_top = (i < (width+1)) ? (i) : (i - (width+1))
+    const i_bottom = (i > (width+1) * ((height+1) - 1)) ? (i) : (i + (width+1))
+    const hleft = imgd.data[4*i_left]
+    const hright = imgd.data[4*i_right]
+    const htop = imgd.data[4*i_top]
+    const hbottom = imgd.data[4*i_bottom]
+    const dx = hleft - hright
+    const dy = htop - hbottom
+    const slope = getSlope(dx, dy, options.elevation_strength * Math.sqrt(width * height))
+    const aspect = getAspect(dx, dy)
+    const L = getReflectance(aspect, slope, options.hillshading_sun_azimuth, options.hillshading_sun_elevation)
+    lPixelMap[i] = L
+  }
+  return lPixelMap
 }
 </script>

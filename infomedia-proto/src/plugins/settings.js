@@ -9,6 +9,7 @@ const infomediaSettings = {
   esDateField: "publishdate",
   // basemap: "/infomedia/data/Infomedia basemap.csv",
   basemap: "/add-datascape/data/Infomedia basemap.csv",
+  heatmapSpread: 2,
   basemapNodeSizeRatio: 1,
   basemapLabels: [
     { x: 256, y: 1058, anchor: "left", label: "European politics" },
@@ -269,6 +270,7 @@ const scopusSettings = {
   esDateField: "coredata.prism:coverDate",
   // basemap: "/scopus/data/Scopus basemap.csv",
   basemap: "/add-datascape/data/Scopus basemap.csv",
+  heatmapSpread: 0.5,
   basemapNodeSizeRatio: 0.1,
   basemapLabels: [
     { x: 3446, y: 2082, anchor: "left", label: "Genetics" },
