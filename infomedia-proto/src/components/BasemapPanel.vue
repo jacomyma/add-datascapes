@@ -404,7 +404,7 @@ function updateHighlight() {
       }
     })
     let d = Math.sqrt(closestDistance2)
-    emit("query", closest.label)
+    emit("query", '"'+closest.label.replace(/"/gi,'')+'"')
 
   });
 
