@@ -1,19 +1,20 @@
 <template>
   <div style="flex-grow: 1; display: flex; position: relative">
     <div style="flex-grow: 1" id="basemap-container">
-      <canvas class="bgCanvas"></canvas
-      ><!-- Background -->
-      <canvas class="hlCanvas"></canvas
-      ><!-- Highlights -->
-      <canvas class="lbCanvas"></canvas
-      ><!-- Label blocks -->
-      <canvas class="lCanvas"></canvas
-      ><!-- Labels -->
-      <canvas class="aCanvas"></canvas
-      ><!-- Annotations -->
+      <!-- Background -->
+      <canvas class="bgCanvas"></canvas>
+      <!-- Highlights -->
+      <canvas class="hlCanvas"></canvas>
+      <!-- Label blocks -->
+      <canvas class="lbCanvas"></canvas>
+      <!-- Labels -->
+      <canvas class="lCanvas"></canvas>
+      <!-- Hidden canvas for click stuff -->
       <canvas class="hiddenCanvas"></canvas>
+      <!-- Annotations -->
+      <canvas class="aCanvas"></canvas>
     </div>
-    <div id="basemap-tooltip"></div>
+    <div id="basemap-tooltip" class="card"></div>
   </div>
 </template>
 
@@ -41,6 +42,10 @@
 .lbCanvas {
   display: none;
 }
+#basemap-tooltip {
+  font: 12px "Nunito", sans-serif;
+  pointer-events: none;
+}
 </style>
 
 
@@ -65,6 +70,22 @@ const emit = defineEmits(["query"]);
 const NECoordinates = ref({});
 let data;
 
+// function to create new colors for picking
+let colorToNode;
+let nextCol = 1;
+function genColor(){
+  var ret = [];
+  if (nextCol < 16777215){
+    ret.push(nextCol & 0xff); //R
+    ret.push((nextCol & 0xff00) >> 8); //G
+    ret.push((nextCol & 0xff0000) >> 16); //B
+
+    nextCol += 1;
+  }
+  const col = "rgb(" + ret.join(',') + ")";
+  return col;
+}
+
 onMounted(() => {
   console.log("Loading basemap data...");
   let _NECoordinates = {};
@@ -76,14 +97,19 @@ onMounted(() => {
     console.log("...basemap data loaded.");
     NECoordinates.value = _NECoordinates;
 
+    colorToNode = {};
+
     data = Object.values(NECoordinates.value).filter((d) => {
       d.x = +d.x;
       d.y = +d.y;
       d.size = +d.size;
       d.showlabel = d.showlabel == "true";
+      d.hiddenCol = genColor();
+      colorToNode[d.hiddenCol] = d
       if (isNaN(d.x) || isNaN(d.y) || isNaN(d.size)) return false;
       else return true;
     });
+
     window.addEventListener("resize", updateBasemap);
     updateBasemap();
   });
@@ -100,29 +126,13 @@ watch(() => props.showClusterLabels, updateBackground);
 watch(() => props.showClusterShapes, updateBackground);
 watch(() => props.quickButUgly, updateBasemap);
 
+document.fonts.ready.then(updateBasemap)
+
 function updateBasemap() {
-  updateBackground();
-  updateHighlight();
-
-  return;
-
-  // var Tooltip = d3.select("#basemap-tooltip");
-
-  // Three function that change the tooltip when user hover / move / leave a cell
-  // TODO: make it work on Canvas
-  /*var mouseover = function (e, d) {
-    Tooltip.style("opacity", 1);
-  };
-  var mousemove = function (e, d) {
-    Tooltip.html(
-      d["named entity"] + "<br>Appears in " + d.count + " of these documents"
-    )
-      .style("left", d3.pointer(e)[0] + 20 + "px")
-      .style("top", d3.pointer(e)[1] + "px");
-  };
-  var mouseleave = function (e, d) {
-    Tooltip.style("opacity", 0);
-  };*/
+  if (data) {
+    updateBackground();
+    updateHighlight();
+  }
 }
 
 let cacheData = []
@@ -150,6 +160,9 @@ function updateHighlight() {
     let lCanvas = d3.select("#basemap-container canvas.lCanvas")
     let lCtx = lCanvas.node().getContext("2d");
     lCtx.putImageData(retrieved.l, 0, 0)
+    let hiddenCanvas = d3.select("#basemap-container canvas.hiddenCanvas")
+    let hiddenCtx = hiddenCanvas.node().getContext("2d");
+    hiddenCtx.putImageData(retrieved.hidden, 0, 0)
 
     return
   }
@@ -211,11 +224,11 @@ function updateHighlight() {
   let lCtx = lCanvas.node().getContext("2d");
   lCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset to avoid any problem
   lCtx.scale(2, 2);
-  // let hiddenCanvas = d3
-  //   .select("#basemap-container canvas.hiddenCanvas")
-  //   .attr("width", width + margin.left + margin.right)
-  //   .attr("height", height + margin.top + margin.bottom);
-  // let hiddenCtx = hiddenCanvas.node().getContext("2d");
+  let hiddenCanvas = d3
+    .select("#basemap-container canvas.hiddenCanvas")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom);
+  let hiddenCtx = hiddenCanvas.node().getContext("2d");
 
   let orderedNodes;
 
@@ -292,8 +305,9 @@ function updateHighlight() {
         hlCtx.beginPath();
         hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + 0.5, 0, 2 * Math.PI);
         hlCtx.fill();
-      });      
+      });
     }
+
 
     // Order nodes for labels
     orderedNodes = data.filter(() => true);
@@ -301,27 +315,31 @@ function updateHighlight() {
     lCtx.fillStyle = "#000000";
   }
 
+  // Order nodes! (to display labels)
+  orderedNodes.sort(function (a, b) {
+    if (a.showlabel) {
+      if (b.showlabel) {
+        return b.score-a.score || b.size - a.size;
+      } else return -1;
+    } else {
+      if (b.showlabel) {
+        return 1;
+      } else return b.score-a.score || b.size - a.size;
+    }
+  });
+
+  orderedNodes.forEach((d,i)=>{
+    d.order = i
+  })
+
   // Display labels
   const yOffset = 8;
   if (props.showLabels) {
 
-    // Order nodes! (to display labels)
-    orderedNodes.sort(function (a, b) {
-      if (a.showlabel) {
-        if (b.showlabel) {
-          return b.score-a.score || b.size - a.size;
-        } else return -1;
-      } else {
-        if (b.showlabel) {
-          return 1;
-        } else return b.score-a.score || b.size - a.size;
-      }
-    });
-
     const fontSize = 12;
     const boxMargin = 6;
     const labelsToConsider = props.quickButUgly?150:10000;
-    lCtx.font = fontSize + 'px "Nunito", serif';
+    lCtx.font = fontSize + 'px "Nunito", sans-serif';
     lCtx.textAlign = "center";
     lCtx.lineWidth = 4;
     lCtx.lineJoin = "round";
@@ -329,10 +347,10 @@ function updateHighlight() {
     // Bounding box context
     lbCtx.fillStyle = "#FFFFFF";
     const skip = 5; // Speed up (precision loss though)
-    let cap = labelsToConsider;
+    let cap = 100; // How many labels fit in screen
     orderedNodes
       .filter((d, i) => i < labelsToConsider)
-      .forEach((d) => {
+      .forEach((d,i) => {
         if (cap <= 0) {
           return;
         }
@@ -366,6 +384,9 @@ function updateHighlight() {
 
           lCtx.strokeText(label, x(d.x), y(d.y) + yOffset);
           lCtx.fillText(label, x(d.x), y(d.y) + yOffset);
+          d.labelDisplayed = true
+        } else {
+          d.labelDisplayed = false
         }
       });
   }
@@ -379,6 +400,30 @@ function updateHighlight() {
     lCtx.fillText(message, msgX, msgY);
   }
 
+  // Draw nodes in hidden canvas
+  orderedNodes.sort(function (a, b) {
+    if (!a.labelDisplayed) {
+      if (!b.labelDisplayed) {
+        return b.order-a.order;
+      } else return -1;
+    } else {
+      if (!b.labelDisplayed) {
+        return 1;
+      } else return b.order-a.order;
+    }
+  })
+  const halfsize = 10;
+  orderedNodes.forEach((d) => {
+    hiddenCtx.fillStyle = d.hiddenCol;
+    hiddenCtx.fillRect(
+      x(d.x) - halfsize,
+      y(d.y) - halfsize,
+      2 * halfsize,
+      2 * halfsize
+    );
+  });
+
+
   // Bind mouse stuff
   d3.select(".aCanvas").on("click", function (e) {
     let mouseX = e.layerX || e.offsetX;
@@ -389,30 +434,67 @@ function updateHighlight() {
     // window.polygon.push("[" + X + "," + Y + "]");
     // console.log(window.polygon.join(","));
 
+
+    emit("query", '"'+HoveredNode.label.replace(/"/gi,'')+'"')
     // Browse the entities nearby
     // Goal: pick the closest entity, only looking
     // at those highlighted (unless no highlight)
-    let closest = false
-    let closestDistance2 = Infinity
-    orderedNodes.forEach(d => {
-      if (!props.highlights || d.score > 0) {
-        let d2 = Math.pow(X-d.x, 2) + Math.pow(Y-d.y, 2)
-        if (d2 < closestDistance2) {
-          closest = d
-          closestDistance2 = d2
-        }
-      }
-    })
-    let d = Math.sqrt(closestDistance2)
-    emit("query", '"'+closest.label.replace(/"/gi,'')+'"')
+    // let closest = false
+    // let closestDistance2 = Infinity
+    // orderedNodes.forEach(d => {
+    //   if (!props.highlights || d.score > 0) {
+    //     let d2 = Math.pow(X-d.x, 2) + Math.pow(Y-d.y, 2)
+    //     if (d2 < closestDistance2) {
+    //       closest = d
+    //       closestDistance2 = d2
+    //     }
+    //   }
+    // })
+    // let d = Math.sqrt(closestDistance2)
+    // emit("query", '"'+closest.label.replace(/"/gi,'')+'"')
 
   });
+
+  const Tooltip = d3.select("#basemap-tooltip");
+  const TopCanvas = d3.select("#basemap-container canvas.aCanvas")
+  let HoveredNode
+
+  // Three function that change the tooltip when user hover / move / leave a cell
+  d3.select(".aCanvas").on("mousemove", function (e) {
+    const mouseX = e.layerX || e.offsetX;
+    const mouseY = e.layerY || e.offsety;
+    const col = hiddenCtx.getImageData(mouseX, mouseY, 1, 1).data;
+    const colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
+    const d = colorToNode[colKey];
+    if (d) {
+      HoveredNode = d
+      let html = d.label
+      // if (d.score && d.score > 0) {
+      //   html += "<br>Appears in " + d.score + " filtered document"+((d.score==1)?(''):('s'))
+      // }
+      Tooltip.html(html)
+        .style("left", d3.pointer(e)[0] + 20 + "px")
+        .style("top", d3.pointer(e)[1] + "px")
+        .style("opacity", 1)
+      TopCanvas.style("cursor", "pointer")
+    } else {
+      HoveredNode = false
+      Tooltip.style("opacity", 0);
+      TopCanvas.style("cursor", "default")
+    }
+  })
+  d3.select(".aCanvas").on("mouseleave", function (e) {
+    HoveredNode = false
+    Tooltip.style("opacity", 0)
+    TopCanvas.style("cursor", "default")
+  })
 
   // Cache
   const dataToCache = {
     hl: hlCtx.getImageData(0, 0, hlCtx.canvas.width, hlCtx.canvas.height),
     lb: lbCtx.getImageData(0, 0, lbCtx.canvas.width, lbCtx.canvas.height),
     l: lCtx.getImageData(0, 0, lCtx.canvas.width, lCtx.canvas.height),
+    hidden: hiddenCtx.getImageData(0, 0, hiddenCtx.canvas.width, hiddenCtx.canvas.height)
   }
   caching.store("highlight", signature, dataToCache)
 }
@@ -613,7 +695,7 @@ function updateBackground() {
 
     // Label text
     const yOffset = 6;
-    aCtx.font = '16px "IBM Plex Serif", sans-serif';
+    aCtx.font = '16px "IBM Plex Serif", serif';
     aCtx.lineWidth = 4;
     aCtx.lineJoin = "round";
     aCtx.lineCap = "round";
