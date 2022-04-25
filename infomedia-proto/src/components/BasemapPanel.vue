@@ -223,7 +223,7 @@ function updateHighlight() {
     );
   let lCtx = lCanvas.node().getContext("2d");
   lCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset to avoid any problem
-  lCtx.scale(2, 2);
+  lCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
   let hiddenCanvas = d3
     .select("#basemap-container canvas.hiddenCanvas")
     .attr("width", width + margin.left + margin.right)
@@ -572,7 +572,7 @@ function updateBackground() {
     );
   let aCtx = aCanvas.node().getContext("2d");
   aCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset to avoid any problem
-  aCtx.scale(2, 2);
+  aCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
   let bgCtx = bgCanvas.node().getContext("2d");
 

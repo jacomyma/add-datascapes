@@ -48,8 +48,8 @@ let openDoc = ref(function (id) {
     params: { id: id.replace(/\./gi,'·') },
   });
   const targetUrl = resolved.href;
-  console.log(targetUrl);
-  window.open(targetUrl);
+  // TODO: reactivate click
+  // window.open(targetUrl);
 });
 </script>
 
