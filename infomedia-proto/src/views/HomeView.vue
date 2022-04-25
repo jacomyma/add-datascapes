@@ -220,7 +220,7 @@ main {
           </fieldset>
         </form>
         <label for="docs-panel" style="padding: 6px; text-align: right">
-          <!-- <input
+<!--           <input
             type="checkbox"
             id="docs-panel"
             v-model="docsPanel"
@@ -238,6 +238,7 @@ main {
           :quick-but-ugly="quickButUgly"
           @query="(q) => (query = q)"
           :query="query"
+          :redraw-state="(docsPanel)?('t'):('f')"
         />
       </div>
     </div>

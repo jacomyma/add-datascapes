@@ -64,6 +64,7 @@ const props = defineProps({
   quickButUgly: Boolean,
   highlights: Boolean,
   query: String,
+  redrawState: String,
 });
 
 const emit = defineEmits(["query"]);
@@ -125,7 +126,7 @@ watch(() => [props.focusedEntities, props.highlights], updateHighlight);
 watch(() => props.showLabels, updateHighlight);
 watch(() => props.showClusterLabels, updateBackground);
 watch(() => props.showClusterShapes, updateBackground);
-watch(() => props.quickButUgly, updateBasemap);
+watch(() => [props.quickButUgly, props.redrawState], updateBasemap);
 
 document.fonts.ready.then(updateBasemap)
 
@@ -148,6 +149,7 @@ function updateHighlight() {
     l: props.showLabels,
     u: props.quickButUgly,
     s: sizing,
+    r: props.redrawState,
   }
   const signature = hashObject(signatureElements)
   const retrieved = caching.retrieve("highlight", signature);
