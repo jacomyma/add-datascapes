@@ -9,6 +9,7 @@ const props = defineProps({
   docs: Array,
   dataLoaded: Boolean,
   loadBatch: Function,
+  query: String,
 });
 
 const emit = defineEmits(["focusedEntities"]);
@@ -54,7 +55,8 @@ let openDoc = ref(function (id) {
 });
 
 function downloadList() {
-  const docList = props.docs.map(doc => {
+  console.log(props.query)
+  const docList = props.docs.map((doc,i) => {
     return {
       id: doc._id,
       title: get.value(doc._source, appSettings.esTitleField),
@@ -62,6 +64,8 @@ function downloadList() {
       entities: (get.value(doc._source, appSettings.esEntitiesField) || []).join("|"),
       source: get.value(doc._source, appSettings.esSourceField),
       date: get.value(doc._source, appSettings.esDateField),
+      query: props.query,
+      rank: (i+1),
     }
   })
   // const csvContent = d3.csvFormat(docList);
@@ -142,12 +146,21 @@ function downloadList() {
       <div>
         <strong>{{ Number(docsTotal).toLocaleString() }} documents</strong> ({{docs.length}} displayed)
       </div>
-      <button
-        class="pure-button"
-        @click="downloadList"
-      >
-        Download {{docs.length}} as CSV
-      </button>
+      <div>
+        <button
+          class="pure-button"
+          style="margin-right:12px"
+          @click="$emit('loadBatch')"
+        >
+          Load more
+        </button>
+        <button
+          class="pure-button"
+          @click="downloadList"
+        >
+          Download {{docs.length}} as CSV
+        </button>
+      </div>
     </div>
     <div style="flex-grow: 1; overflow-y: auto">
       <div

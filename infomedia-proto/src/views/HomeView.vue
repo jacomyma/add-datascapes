@@ -22,6 +22,7 @@ const showEntitiesLabels = ref(true);
 const showClusterShapes = ref(true);
 const showClusterLabels = ref(true);
 const quickButUgly = ref(false);
+const docsPanel = ref(true);
 
 const fetchES = function (route, params) {
   // const username = 'elastic'
@@ -181,7 +182,7 @@ main {
       >
         <queryField @query="(q) => (query = q)" :query="query"/>
       </div>
-      <div style="padding: 6px">
+      <div style="padding: 6px; display:flex; flex-direction: row; justify-content: space-between;">
         <form class="pure-form">
           <fieldset>
             <label for="show-labels" style="padding: 6px">
@@ -190,7 +191,7 @@ main {
                 id="show-labels"
                 v-model="showEntitiesLabels"
               />
-              Show labels
+              Labels
             </label>
             <label for="show-cluster-shapes" style="padding: 6px">
               <input
@@ -198,7 +199,7 @@ main {
                 id="show-cluster-shapes"
                 v-model="showClusterShapes"
               />
-              Show cluster shapes
+              Cluster shapes
             </label>
             <label for="show-cluster-labels" style="padding: 6px">
               <input
@@ -206,7 +207,7 @@ main {
                 id="show-cluster-labels"
                 v-model="showClusterLabels"
               />
-              Show cluster labels
+              Cluster labels
             </label>
             <label for="quick-but-ugly" style="padding: 6px">
               <input
@@ -218,6 +219,14 @@ main {
             </label>
           </fieldset>
         </form>
+        <label for="docs-panel" style="padding: 6px; text-align: right">
+          <!-- <input
+            type="checkbox"
+            id="docs-panel"
+            v-model="docsPanel"
+          />
+          Docs Panel > -->
+        </label>
       </div>
       <div style="background-color: #000; flex-grow: 1; display: flex">
         <basemapPanel
@@ -233,6 +242,7 @@ main {
       </div>
     </div>
     <div
+      v-if="docsPanel"
       class="documents-panel"
       style="
         min-width: 600px;
@@ -249,6 +259,7 @@ main {
         :docs-total="docsTotal"
         @loadBatch="loadBatch"
         @focusedEntities="highlightEntities"
+        :query="query"
       />
     </div>
   </main>
