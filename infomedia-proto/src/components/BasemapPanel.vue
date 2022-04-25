@@ -63,6 +63,7 @@ const props = defineProps({
   showClusterLabels: Boolean,
   quickButUgly: Boolean,
   highlights: Boolean,
+  query: String,
 });
 
 const emit = defineEmits(["query"]);
@@ -434,8 +435,18 @@ function updateHighlight() {
     // window.polygon.push("[" + X + "," + Y + "]");
     // console.log(window.polygon.join(","));
 
-
-    emit("query", '"'+HoveredNode.label.replace(/"/gi,'')+'"')
+    
+    if (HoveredNode) {
+      if (e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) {
+        if (props.query && props.query.length>0) {
+          emit("query", props.query+' AND "'+HoveredNode.label.replace(/"/gi,'')+'"')
+        } else {
+          emit("query", '"'+HoveredNode.label.replace(/"/gi,'')+'"')
+        }
+      } else {
+        emit("query", '"'+HoveredNode.label.replace(/"/gi,'')+'"')
+      }
+    }
     // Browse the entities nearby
     // Goal: pick the closest entity, only looking
     // at those highlighted (unless no highlight)

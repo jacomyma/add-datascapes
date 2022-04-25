@@ -228,6 +228,7 @@ main {
           :show-cluster-labels="showClusterLabels"
           :quick-but-ugly="quickButUgly"
           @query="(q) => (query = q)"
+          :query="query"
         />
       </div>
     </div>

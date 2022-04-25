@@ -7,8 +7,8 @@ const infomediaSettings = {
   esTitleField: "heading",
   esSourceField: "sourcename",
   esDateField: "publishdate",
-  basemap: "/infomedia/data/Infomedia basemap.csv",
-  // basemap: "/add-datascape/data/Infomedia basemap.csv",
+  // basemap: "/infomedia/data/Infomedia basemap.csv",
+  basemap: "/add-datascape/data/Infomedia basemap.csv",
   heatmapSpread: 2,
   basemapNodeSizeRatio: 1,
   basemapLabels: [
