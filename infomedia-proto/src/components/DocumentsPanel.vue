@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import appSettings from "../plugins/settings";
 import router from "@/router";
+import * as d3 from "d3";
 
 const props = defineProps({
   docsTotal: Number,
@@ -51,6 +52,27 @@ let openDoc = ref(function (id) {
   // TODO: reactivate click
   // window.open(targetUrl);
 });
+
+function downloadList() {
+  const docList = props.docs.map(doc => {
+    return {
+      id: doc._id,
+      title: get.value(doc._source, appSettings.esTitleField),
+      text: get.value(doc._source, appSettings.esTextField),
+      entities: (get.value(doc._source, appSettings.esEntitiesField) || []).join("|"),
+      source: get.value(doc._source, appSettings.esSourceField),
+      date: get.value(doc._source, appSettings.esDateField),
+    }
+  })
+  // const csvContent = d3.csvFormat(docList);
+  const csvContent = "data:text/csv;charset=utf-8," + d3.csvFormat(docList)
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "documents.csv");
+  document.body.appendChild(link); // Required for FF
+  link.click();
+}
 </script>
 
 <style>
@@ -116,8 +138,16 @@ let openDoc = ref(function (id) {
         </fieldset>
       </form>
     </div>
-    <div style="padding: 6px">
-      {{ Number(docsTotal).toLocaleString() }} documents
+    <div style="padding: 12px; display:flex; flex-direction: row; justify-content: space-between;">
+      <div>
+        <strong>{{ Number(docsTotal).toLocaleString() }} documents</strong> ({{docs.length}} displayed)
+      </div>
+      <button
+        class="pure-button"
+        @click="downloadList"
+      >
+        Download {{docs.length}} as CSV
+      </button>
     </div>
     <div style="flex-grow: 1; overflow-y: auto">
       <div
