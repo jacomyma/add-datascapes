@@ -7,8 +7,7 @@ const infomediaSettings = {
   esTitleField: "heading",
   esSourceField: "sourcename",
   esDateField: "publishdate",
-  // basemap: "/infomedia/data/Infomedia basemap.csv",
-  basemap: "/add-datascape/data/Infomedia basemap.csv",
+  basemap: "/infomedia/data/Infomedia basemap.csv",
   heatmapSpread: 2,
   basemapNodeSizeRatio: 1,
   basemapLabels: [
@@ -268,8 +267,7 @@ const scopusSettings = {
   esTitleField: "coredata.dc:title",
   esSourceField: "coredata.prism:publicationName",
   esDateField: "coredata.prism:coverDate",
-  // basemap: "/scopus/data/Scopus basemap.csv",
-  basemap: "/add-datascape/data/Scopus basemap.csv",
+  basemap: "/scopus/data/Scopus basemap.csv",
   heatmapSpread: 0.5,
   basemapNodeSizeRatio: 0.1,
   basemapLabels: [
@@ -685,5 +683,4 @@ const scopusSettings = {
   ],
 };
 
-// export default scopusSettings;
-export default infomediaSettings;
+export default (import.meta.env.BASE_URL == "/scopus/")?(scopusSettings):(infomediaSettings);

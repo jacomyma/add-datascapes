@@ -29,8 +29,7 @@ npm run build
 ```
 
 Stuff that I have to change everytime because I suck at this and did not find a solution in the time I had:
-* Change the ```basemap``` path for the built datascape in the file ```plugins/settings.js```
-* Change the ```base``` path in ```defineConfig``` in the file ```vite.config.js```
+* Change the ```base``` variable in the file ```vite.config.js```
 
 ### Lint with [ESLint](https://eslint.org/)
 
