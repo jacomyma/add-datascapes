@@ -3,6 +3,7 @@ import { ref } from "vue";
 import appSettings from "../plugins/settings";
 import router from "@/router";
 import * as d3 from "d3";
+import { saveAs } from 'file-saver';
 
 const props = defineProps({
   docsTotal: Number,
@@ -68,14 +69,12 @@ function downloadList() {
       rank: (i+1),
     }
   })
-  // const csvContent = d3.csvFormat(docList);
-  const csvContent = "data:text/csv;charset=utf-8," + d3.csvFormat(docList)
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "documents.csv");
-  document.body.appendChild(link); // Required for FF
-  link.click();
+  const csvContent = d3.csvFormat(docList);
+  const date = (new Date()).toISOString().split('T')[0]
+  const blob = new Blob([csvContent], {type: "text/csv;charset=utf-8"});
+  saveAs(blob, date+" "+docList.length+" documents.csv");
+
+  saveAs
 }
 </script>
 
