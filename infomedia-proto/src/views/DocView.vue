@@ -20,7 +20,7 @@ const get = ref((t, path) => path.split(".").reduce((r, k) => r?.[k], t));
 const fetchES = function (route) {
   const username = "elastic";
   const password = "9pSJ5siACNtVAUwB2mj8";
-  return fetch("http://10.92.0.111:9200/" + route, {
+  return fetch("https://add.learning.aau.dk/elasticsearch/" + route, {
     method: "GET",
     headers: {
       "Content-type": "application/json; charset=UTF-8",

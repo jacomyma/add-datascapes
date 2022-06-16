@@ -1,3 +1,0 @@
-<RequireAny>
-    Require method DELETE GET POST PUT OPTIONS
-</RequireAny>
