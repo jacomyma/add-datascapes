@@ -4,8 +4,8 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 
 // EDIT ME TO CHANGE THE DATASCAPE
-const base = '/infomedia/';
-// const base = '/scopus/';
+// const base = '/infomedia/';
+const base = '/scopus/';
 
 // https://vitejs.dev/config/
 export default defineConfig({

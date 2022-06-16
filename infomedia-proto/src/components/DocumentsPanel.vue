@@ -51,8 +51,7 @@ let openDoc = ref(function (id) {
     params: { id: id.replace(/\./gi,'·') },
   });
   const targetUrl = resolved.href;
-  // TODO: reactivate click
-  // window.open(targetUrl);
+  window.open(targetUrl);
 });
 
 function downloadList() {

@@ -30,11 +30,12 @@ const fetchES = function (route, params) {
   // fetch("https://localhost:9200/", {
   const username = "elastic";
   const password = "9pSJ5siACNtVAUwB2mj8";
-  return fetch("http://10.92.0.111:9200/" + route, {
+  return fetch("https://add.learning.aau.dk/elasticsearch/" + route, {
+  // return fetch("http://10.92.0.111:9200/" + route, {
     method: "POST",
     headers: {
       "Content-type": "application/json; charset=UTF-8",
-      Authorization: "Basic " + Base64.encode(username + ":" + password),
+      "Authorization": "Basic " + Base64.encode(username + ":" + password),
     },
     body: JSON.stringify(params),
   }).then((response) => {
