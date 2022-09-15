@@ -91,7 +91,7 @@ function genColor(){
 onMounted(() => {
   console.log("Loading basemap data...");
   let _NECoordinates = {};
-  d3.csv(appSettings.basemap, (row) => {
+  d3.csv(import.meta.env.BASE_URL+appSettings.basemap, (row) => {
     row["Id"] = row["Id"].toLowerCase();
     let ne = row["Id"];
     _NECoordinates[ne] = row;

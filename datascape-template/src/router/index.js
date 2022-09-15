@@ -15,14 +15,9 @@ const router = createRouter({
       component: () => import("../views/DocView.vue"),
     },
     {
-      path: "/help-infomedia",
-      name: "help-infomedia",
-      component: () => import("../views/HelpInfomedia.vue"),
-    },
-    {
-      path: "/help-scopus",
-      name: "help-scopus",
-      component: () => import("../views/HelpScopus.vue"),
+      path: "/help",
+      name: "help",
+      component: () => import("../views/Help.vue"),
     },
   ],
 });
