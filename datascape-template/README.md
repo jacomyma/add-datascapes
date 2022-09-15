@@ -32,6 +32,8 @@ A Brief History of Time,A Brief History of Time,189.89796,-341.16403,1.2530332,f
 
 This is where you set up the connection with the ElasticSearch engine you need to have set up beforehand. That is also where you may add annotations to the basemap, and tune things like the datascape title.
 
+The polygons and labels are just annotations, and they are entirely optional. Leave each list empty if you do not want them.
+
 ```js
 // SETTINGS: CHANGE ME
 export default {
