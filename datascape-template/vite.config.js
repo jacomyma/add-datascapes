@@ -4,7 +4,7 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 
 // EDIT ME TO CHANGE THE DATASCAPE FOLDER
-const base = '/poney/';
+const base = '/infomedia/';
 
 // https://vitejs.dev/config/
 export default defineConfig({
