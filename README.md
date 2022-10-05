@@ -6,7 +6,7 @@ This project is licensed under the GNU General Public License v3.0.
 See the ```LICENSE``` file.
 
 ## Authors
-Mathieu Jacomy and Anders Kristian Munk for the AAU Tantlab.
+Mathieu Jacomy, Anders Kristian Munk and Snorre Ralund.
 
 ## How to use
 Follow instructions from the ```datascape-template``` folder's [README](https://github.com/jacomyma/add-datascapes/tree/main/datascape-template). I recommend that you duplicate that folder before you change it.
