@@ -3,7 +3,7 @@ Datascape prototypes for the project Algoritmer Data og Demokrati
 
 ## License
 This project is licensed under the GNU General Public License v3.0.
-See the ```LICENSE``` file.
+See the [```LICENSE```](https://github.com/jacomyma/add-datascapes/blob/main/LICENSE) file.
 
 ## Authors
 Mathieu Jacomy, Anders Kristian Munk and Snorre Ralund.

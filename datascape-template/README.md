@@ -3,7 +3,7 @@ This folder is dedicated to the web front-end of the datascape.
 
 ## License
 This project is licensed under the GNU General Public License v3.0.
-See the ```LICENSE``` file.
+See the [```LICENSE```](https://github.com/jacomyma/add-datascapes/blob/main/LICENSE) file.
 
 ## Config
 
