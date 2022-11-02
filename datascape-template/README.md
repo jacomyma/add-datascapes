@@ -10,7 +10,7 @@ See the [```LICENSE```](https://github.com/jacomyma/add-datascapes/blob/main/LIC
 Before you work with the project (dev or build), you need to configure it with data that is not part of this repository.
 
 ### 1. Choose a name for your datascape.
-This allows you deploy different datascapes in parallel. For the sake of the example, I arbitrary pick the name ```poney```.
+This allows you deploy different datascapes in parallel. For the sake of the example, I arbitrarily pick the name ```poney```.
 
 ### 2. Edit the ```vite.config.js``` file to assign the name you've chosen to the ```base``` variable:
 
