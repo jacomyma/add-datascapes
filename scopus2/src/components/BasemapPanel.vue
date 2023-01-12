@@ -236,11 +236,10 @@ function updateHighlight() {
   let orderedNodes;
 
   if (highlights) {
+    const filteredData = data.filter(d => d.highlight)
     if (props.quickButUgly) {
       // Add dots (highlight halo)
-      data
-        .filter((d) => d.highlight)
-        .forEach((d) => {
+      filteredData.forEach(d => {
           let halfsize = sizeRatio * d.size + 1.2 * nodeSizeOffset
           hlCtx.fillStyle = "rgba(255,255,255,"+(0.5 * d.intensity)+")";
           hlCtx.fillRect(
@@ -251,45 +250,44 @@ function updateHighlight() {
           )
         });
     } else {
-      // Add dots (highlight halo)
-      data
-        .filter((d) => d.highlight)
-        .forEach((d) => {
-          hlCtx.fillStyle = "rgba(255,255,255,"+d.intensity+")";
-          hlCtx.beginPath();
-          hlCtx.arc(
-            x(d.x),
-            y(d.y),
-            sizeRatio * d.size + nodeSizeOffset,
-            0,
-            2 * Math.PI
-          );
-          hlCtx.fill();
-        });
-
-      // Blur!
-      StackBlur.canvasRGBA(
-        hlCtx.canvas,
-        0,
-        0,
-        hlCtx.canvas.width,
-        hlCtx.canvas.height,
-        hlCtx.canvas.width / 50
-      );
+      /// Compute and draw density contours
+      const densityBandwidth = Math.min(width, height) * 0.03
+      const densityThresholds = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(d => 0.01*Math.pow(1.6,d))
+      const densityContourColor = "#FFFFFF"
+      const densityContourThickness = 1
+      // Compute
+      let contours = d3.contourDensity()
+          .x(d => x(d.x))
+          .y(d => y(d.y))
+          .weight(d => d.score)
+          .size([width + margin.left + margin.right, height + margin.top + margin.bottom])
+          .cellSize(Math.min(width, height)/256)
+          .bandwidth(densityBandwidth)
+          .thresholds(densityThresholds)
+        (filteredData);
+      // Draw density contours
+      hlCtx.strokeStyle = densityContourColor;
+      hlCtx.lineWidth = densityContourThickness;
+      const generator = d3.geoPath().context(hlCtx);
+      contours.forEach(multipolygon => {
+        hlCtx.beginPath();
+        generator(multipolygon)
+        hlCtx.stroke();
+      });
 
       // Add dots (highlight)
       hlCtx.fillStyle = "#FFFFFFBB";
-      data
-        .filter((d) => d.highlight)
-        .forEach((d) => {
+      filteredData.forEach((d) => {
           hlCtx.beginPath();
-          hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + .6, 0, 2 * Math.PI);
+          hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + .8, 0, 2 * Math.PI);
           hlCtx.fill();
         });
     }
 
     // Order nodes for labels
-    orderedNodes = data.filter((d) => d.highlight);
+    orderedNodes = filteredData.slice(0);
+    orderedNodes.sort(function(a,b){return b.score - a.score})
+    orderedNodes = orderedNodes.filter((d,i) => i<8 || (i<250 && d.score>=3))
     lCtx.strokeStyle = "#999785";
     lCtx.fillStyle = "#FFFFFF";
   } else {
@@ -311,9 +309,8 @@ function updateHighlight() {
       });
     }
 
-
     // Order nodes for labels
-    orderedNodes = data.filter(() => true);
+    orderedNodes = data.slice(0);
     lCtx.strokeStyle = "#999785";
     lCtx.fillStyle = "#000000";
   }
@@ -623,7 +620,7 @@ function updateBackground() {
     bgCtx.fillStyle = "rgba(255,255,255)";
     data.forEach((d) => {
       bgCtx.beginPath();
-      bgCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + appSettings.heatmapSpread, 0, 2 * Math.PI);
+      bgCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + sizeRatio * appSettings.heatmapSpread, 0, 2 * Math.PI);
       bgCtx.fill();
     });
     StackBlur.canvasRGB(
@@ -642,7 +639,6 @@ function updateBackground() {
     bgCtx.fillStyle = "#9ba7a9";
     bgCtx.fillRect(0, 0, bgCtx.canvas.width, bgCtx.canvas.height);
 
-    
     // Add dots background
     bgCtx.fillStyle = "#999785";
     data.forEach((d) => {
@@ -655,18 +651,29 @@ function updateBackground() {
     bgCtx.fillStyle = "#504132";
     data.forEach((d) => {
       bgCtx.beginPath();
-      bgCtx.arc(x(d.x), y(d.y), sizeRatio * d.size, 0, 2 * Math.PI);
+      bgCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + 0.5, 0, 2 * Math.PI);
       bgCtx.fill();
     });
 
+    // Blur!
+    StackBlur.canvasRGB(
+      bgCtx.canvas,
+      0,
+      0,
+      bgCtx.canvas.width,
+      bgCtx.canvas.height,
+      bgCtx.canvas.width / 64
+    );
+
     // Apply hillshading
+    const hillshadingDarkness = 0.2
     const lGradient = l => Math.pow(Math.max(0, .2+.8*Math.min(1, 1.4*l||0)), .6)
     let imgd = bgCtx.getImageData(0, 0, bgCtx.canvas.width, bgCtx.canvas.height)
     for (let I=0; I<imgd.data.length; I+=4) {
       const l = hsData[I/4]
-      imgd.data[I  ] = Math.floor(imgd.data[I  ]*(.85+.15*lGradient(l)))
-      imgd.data[I+1] = Math.floor(imgd.data[I+1]*(.85+.15*lGradient(l)))
-      imgd.data[I+2] = Math.floor(imgd.data[I+2]*(.85+.15*lGradient(l)))
+      imgd.data[I  ] = Math.floor(imgd.data[I  ]*((1-hillshadingDarkness)+hillshadingDarkness*lGradient(l)))
+      imgd.data[I+1] = Math.floor(imgd.data[I+1]*((1-hillshadingDarkness)+hillshadingDarkness*lGradient(l)))
+      imgd.data[I+2] = Math.floor(imgd.data[I+2]*((1-hillshadingDarkness)+hillshadingDarkness*lGradient(l)))
     }
     bgCtx.putImageData(imgd, 0, 0)
 
@@ -797,8 +804,8 @@ function hashCode(txt) {
 
 function computeHillshading(imgd) {
   let options = {}
-  options.elevation_strength = 0.0007
-  options.hillshading_sun_azimuth = Math.PI * 0.8 // angle in radians
+  options.elevation_strength = 0.0012
+  options.hillshading_sun_azimuth = Math.PI * 0.6 // angle in radians
   options.hillshading_sun_elevation = Math.PI * 0.3 // angle in radians
 
   const width = imgd.width

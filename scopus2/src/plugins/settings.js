@@ -11,7 +11,7 @@ let scopus2Settings = {
   esSourceField: "coredata.prism:publicationName",
   esDateField: "coredata.prism:coverDate",
   basemap: "data/scopus2basemap.csv",
-  heatmapSpread: 0.5,
+  heatmapSpread: 25,
   basemapNodeSizeRatio: 0.1,
   basemapLabels: [
     {x: 2983.1838, y: 552.1252, anchor:"center", label:"SOCIAL SCIENCE"},
