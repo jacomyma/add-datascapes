@@ -92,8 +92,8 @@ onMounted(() => {
   console.log("Loading basemap data...");
   let _NECoordinates = {};
   d3.csv(import.meta.env.BASE_URL+appSettings.basemap, (row) => {
-    row["Id"] = row["Id"].toLowerCase();
-    let ne = row["Id"];
+    // row["key"] = row["key"].toLowerCase();
+    let ne = row["key"];
     _NECoordinates[ne] = row;
   }).then(() => {
     console.log("...basemap data loaded.");
@@ -175,7 +175,7 @@ function updateHighlight() {
   let max = 0;
   let count = 0;
   let total = 0;
-  props.focusedEntities.forEach((entityObj) => {
+  props.focusedEntities.forEach(entityObj => {
     let score = entityObj.score;
     neIndex[entityObj.label.toLowerCase()] = score;
     max = Math.max(max, score)
@@ -189,8 +189,9 @@ function updateHighlight() {
   const ratio1 = (average<0.3)?(0.3/average):(1);
   const ratio2 = Math.min(1, saturation / (ratio1 * total / max));
   data.forEach((d) => {
-    d.highlight = !!neIndex[d.Id];
-    d.score = neIndex[d.Id] || 0;
+    let key = d.key.toLowerCase();
+    d.highlight = !!neIndex[key];
+    d.score = neIndex[key] || 0;
     d.intensity = Math.max(0, Math.min(1, ratio2 * ratio1 * baseOpacity * d.score/max));
   });
 

@@ -6,7 +6,7 @@ let scopus2Settings = {
   esPassword: "9pSJ5siACNtVAUwB2mj8", // The password to connect to the index
   esIndex: "scopus",
   esTextField: "coredata.dc:description",
-  esEntitiesField: "bm2Entities",
+  esEntitiesField: "bm3Entities",
   esTitleField: "coredata.dc:title",
   esSourceField: "coredata.prism:publicationName",
   esDateField: "coredata.prism:coverDate",
