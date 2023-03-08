@@ -305,7 +305,7 @@ function updateHighlight() {
       // });
 
       // Improvised KDE
-      const densityRadius = Math.min(width, height) * 0.04 // aka bandwidth
+      const densityRadius = Math.min(width, height) * 0.03 // aka bandwidth
       // Paint it black
       hlCtx.fillStyle = "#000000";
       hlCtx.fillRect(0, 0, hlCtx.canvas.width, hlCtx.canvas.height);
@@ -327,7 +327,7 @@ function updateHighlight() {
       )
       // Edit imagedata directly
       let imgd = hlCtx.getImageData(0, 0, hlCtx.canvas.width, hlCtx.canvas.height)
-      const steepness = 0.1
+      const steepness = 0.01
       const levels = 6
       for (let i=0; i<imgd.data.length; i+=4) {
         let lvl = 255 * Math.log(1+steepness*imgd.data[i])/Math.log(1+steepness*255)
