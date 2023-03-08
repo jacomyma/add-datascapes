@@ -13,6 +13,18 @@
       <canvas class="hiddenCanvas"></canvas>
       <!-- Annotations -->
       <canvas class="aCanvas"></canvas>
+      <!-- UI -->
+      <div class="basemap-ui" style="display: flex; flex-grow: 1; flex-direction: column; justify-content: flex-end;">
+        <div style="height: 42px; padding-left:6px;">
+          <button
+            class="pure-button"
+            style="margin-right: 12px"
+            @click="exportImage"
+          >
+            Export image
+          </button>
+        </div>
+      </div>
     </div>
     <div id="basemap-tooltip" class="card"></div>
   </div>
@@ -30,11 +42,13 @@
 .hiddenCanvas,
 .lCanvas,
 .lbCanvas,
-.aCanvas {
+.aCanvas,
+.basemap-ui {
   position: absolute;
 }
 .lCanvas,
-.aCanvas {
+.aCanvas,
+.basemap-ui {
   width: 100%;
   height: 100%;
 }
@@ -909,5 +923,9 @@ function computeHillshading(imgd) {
     lPixelMap[i] = L
   }
   return lPixelMap
+}
+
+function exportImage() {
+  alert("TODO: export image")
 }
 </script>
