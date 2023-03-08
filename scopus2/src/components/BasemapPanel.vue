@@ -53,6 +53,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import * as d3 from "d3";
+import * as d3hexbin from "d3-hexbin";
 import * as StackBlur from "stackblur-canvas";
 import appSettings from "../plugins/settings";
 
@@ -251,30 +252,57 @@ function updateHighlight() {
           )
         });
     } else {
-      /// Compute and draw density contours
-      const densityBandwidth = Math.min(width, height) * 0.03
-      const densityThresholds = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(d => 0.01*Math.pow(1.6,d))
-      const densityContourColor = "#FFFFFF"
-      const densityContourThickness = 1
-      // Compute
-      let contours = d3.contourDensity()
-          .x(d => x(d.x))
-          .y(d => y(d.y))
-          .weight(d => d.score)
-          .size([width + margin.left + margin.right, height + margin.top + margin.bottom])
-          .cellSize(Math.min(width, height)/256)
-          .bandwidth(densityBandwidth)
-          .thresholds(densityThresholds)
-        (filteredData);
-      // Draw density contours
-      hlCtx.strokeStyle = densityContourColor;
-      hlCtx.lineWidth = densityContourThickness;
-      const generator = d3.geoPath().context(hlCtx);
-      contours.forEach(multipolygon => {
+      // Hexbin
+      const hsize = Math.min(width, height) * 0.04; // Hex radius
+      var inputForHexbinFun = []
+      filteredData.forEach(function(d) {
+        inputForHexbinFun.push( [x(d.x), y(d.y)] )
+      })
+      // Prepare a color palette
+      var color = d3.scalePow()
+          .exponent(0.666)
+          .domain([0, 60]) // Number of points (order of magnitude)
+          .range(["transparent",  "#EEEEEE"])
+          .clamp(true)
+      // Compute the hexbin data
+      var hexbin = d3hexbin.hexbin()
+        .radius(hsize) // size of the bin in px
+        .extent([ [0, 0], [width + margin.left + margin.right, height + margin.top + margin.bottom] ])
+      // Draw
+      hexbin(inputForHexbinFun).forEach(h => {
+        hlCtx.fillStyle = color(h.length);
         hlCtx.beginPath();
-        generator(multipolygon)
-        hlCtx.stroke();
+        hlCtx.moveTo(h.x + hsize * Math.cos(Math.PI/6), h.y + hsize * Math.sin(Math.PI/6));
+        for (let side=0; side < 7; side++) {
+          hlCtx.lineTo(h.x + hsize * Math.cos(Math.PI/6 + side * 2 * Math.PI/6), h.y + hsize * Math.sin(Math.PI/6 + side * 2 * Math.PI/6));
+        }
+        hlCtx.fill();
       });
+
+      // /// Compute and draw density contours
+      // const densityBandwidth = Math.min(width, height) * 0.03
+      // const densityThresholds = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(d => 0.01*Math.pow(1.6,d))
+      // const densityContourColor = "#FFFFFF"
+      // const densityContourThickness = 1
+      // // Compute
+      // let contours = d3.contourDensity()
+      //     .x(d => x(d.x))
+      //     .y(d => y(d.y))
+      //     .weight(d => d.score)
+      //     .size([width + margin.left + margin.right, height + margin.top + margin.bottom])
+      //     .cellSize(Math.min(width, height)/256)
+      //     .bandwidth(densityBandwidth)
+      //     .thresholds(densityThresholds)
+      //   (filteredData);
+      // // Draw density contours
+      // hlCtx.strokeStyle = densityContourColor;
+      // hlCtx.lineWidth = densityContourThickness;
+      // const generator = d3.geoPath().context(hlCtx);
+      // contours.forEach(multipolygon => {
+      //   hlCtx.beginPath();
+      //   generator(multipolygon)
+      //   hlCtx.stroke();
+      // });
 
       // Add dots (highlight)
       hlCtx.fillStyle = "#FFFFFFBB";
