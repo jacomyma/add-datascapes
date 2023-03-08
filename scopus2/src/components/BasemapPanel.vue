@@ -252,32 +252,32 @@ function updateHighlight() {
           )
         });
     } else {
-      // Hexbin
-      const hsize = Math.min(width, height) * 0.04; // Hex radius
-      var inputForHexbinFun = []
-      filteredData.forEach(function(d) {
-        inputForHexbinFun.push( [x(d.x), y(d.y)] )
-      })
-      // Prepare a color palette
-      var color = d3.scalePow()
-          .exponent(0.666)
-          .domain([0, 60]) // Number of points (order of magnitude)
-          .range(["transparent",  "#EEEEEE"])
-          .clamp(true)
-      // Compute the hexbin data
-      var hexbin = d3hexbin.hexbin()
-        .radius(hsize) // size of the bin in px
-        .extent([ [0, 0], [width + margin.left + margin.right, height + margin.top + margin.bottom] ])
-      // Draw
-      hexbin(inputForHexbinFun).forEach(h => {
-        hlCtx.fillStyle = color(h.length);
-        hlCtx.beginPath();
-        hlCtx.moveTo(h.x + hsize * Math.cos(Math.PI/6), h.y + hsize * Math.sin(Math.PI/6));
-        for (let side=0; side < 7; side++) {
-          hlCtx.lineTo(h.x + hsize * Math.cos(Math.PI/6 + side * 2 * Math.PI/6), h.y + hsize * Math.sin(Math.PI/6 + side * 2 * Math.PI/6));
-        }
-        hlCtx.fill();
-      });
+      // // Hexbin
+      // const hsize = Math.min(width, height) * 0.04; // Hex radius
+      // var inputForHexbinFun = []
+      // filteredData.forEach(function(d) {
+      //   inputForHexbinFun.push( [x(d.x), y(d.y)] )
+      // })
+      // // Prepare a color palette
+      // var color = d3.scalePow()
+      //     .exponent(0.666)
+      //     .domain([0, 60]) // Number of points (order of magnitude)
+      //     .range(["transparent",  "#EEEEEE"])
+      //     .clamp(true)
+      // // Compute the hexbin data
+      // var hexbin = d3hexbin.hexbin()
+      //   .radius(hsize) // size of the bin in px
+      //   .extent([ [0, 0], [width + margin.left + margin.right, height + margin.top + margin.bottom] ])
+      // // Draw
+      // hexbin(inputForHexbinFun).forEach(h => {
+      //   hlCtx.fillStyle = color(h.length);
+      //   hlCtx.beginPath();
+      //   hlCtx.moveTo(h.x + hsize * Math.cos(Math.PI/6), h.y + hsize * Math.sin(Math.PI/6));
+      //   for (let side=0; side < 7; side++) {
+      //     hlCtx.lineTo(h.x + hsize * Math.cos(Math.PI/6 + side * 2 * Math.PI/6), h.y + hsize * Math.sin(Math.PI/6 + side * 2 * Math.PI/6));
+      //   }
+      //   hlCtx.fill();
+      // });
 
       // /// Compute and draw density contours
       // const densityBandwidth = Math.min(width, height) * 0.03
@@ -304,6 +304,44 @@ function updateHighlight() {
       //   hlCtx.stroke();
       // });
 
+      // Improvised KDE
+      const densityRadius = Math.min(width, height) * 0.04 // aka bandwidth
+      // Paint it black
+      hlCtx.fillStyle = "#000000";
+      hlCtx.fillRect(0, 0, hlCtx.canvas.width, hlCtx.canvas.height);
+      // Draw dots semi-transparently
+      hlCtx.fillStyle = "#FFFFFF55";
+      filteredData.forEach((d) => {
+          hlCtx.beginPath();
+          hlCtx.arc(x(d.x), y(d.y), sizeRatio * 200, 0, 2 * Math.PI);
+          hlCtx.fill();
+        })
+      // Blur (bandwidth)
+      StackBlur.canvasRGB(
+        hlCtx.canvas,
+        0,
+        0,
+        hlCtx.canvas.width,
+        hlCtx.canvas.height,
+        densityRadius
+      )
+      // Edit imagedata directly
+      let imgd = hlCtx.getImageData(0, 0, hlCtx.canvas.width, hlCtx.canvas.height)
+      const steepness = 0.1
+      const levels = 6
+      for (let i=0; i<imgd.data.length; i+=4) {
+        let lvl = 255 * Math.log(1+steepness*imgd.data[i])/Math.log(1+steepness*255)
+        lvl = Math.floor(lvl * levels/255) * 255/levels
+        lvl = Math.floor(lvl)
+        // Rewrite the pixel as white with transparency
+        imgd.data[i  ] = 255
+        imgd.data[i+1] = 255
+        imgd.data[i+2] = 255
+        imgd.data[i+3] = lvl
+      }
+      hlCtx.putImageData(imgd, 0, 0)
+      
+      
       // Add dots (highlight)
       hlCtx.fillStyle = "#FFFFFFBB";
       filteredData.forEach((d) => {
