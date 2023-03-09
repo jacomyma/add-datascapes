@@ -338,6 +338,7 @@ function updateHighlight() {
 
       // Improvised KDE
       const densityRadius = Math.min(width, height) * 0.03 // aka bandwidth
+      const dotRadius =  Math.min(width, height) * 0.26
       // Paint it black
       hlCtx.fillStyle = "#000000";
       hlCtx.fillRect(0, 0, hlCtx.canvas.width, hlCtx.canvas.height);
@@ -345,7 +346,7 @@ function updateHighlight() {
       hlCtx.fillStyle = "#FFFFFF55";
       filteredData.forEach((d) => {
           hlCtx.beginPath();
-          hlCtx.arc(x(d.x), y(d.y), sizeRatio * 200, 0, 2 * Math.PI);
+          hlCtx.arc(x(d.x), y(d.y), sizeRatio * dotRadius, 0, 2 * Math.PI);
           hlCtx.fill();
         })
       // Blur (bandwidth)
