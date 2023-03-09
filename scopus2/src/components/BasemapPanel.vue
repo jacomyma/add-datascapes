@@ -670,6 +670,11 @@ function updateBackground() {
     .select("#basemap-container canvas.bgCanvas")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom);
+
+  let bgCtx = bgCanvas.node().getContext("2d");
+
+  drawBackground(bgCtx, sizing)
+
   let aCanvas = d3
     .select("#basemap-container canvas.aCanvas")
     .attr(
@@ -683,8 +688,56 @@ function updateBackground() {
   let aCtx = aCanvas.node().getContext("2d");
   aCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset to avoid any problem
   aCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  
+  // Annotations
+  // Polygons & lines
+  const displayPolygons = function (shape) {
+    aCtx.beginPath();
+    shape.forEach((d, i) => {
+      if (i == 0) {
+        aCtx.moveTo(x(d[0]), y(d[1]));
+      } else {
+        aCtx.lineTo(x(d[0]), y(d[1]));
+      }
+    });
+    aCtx.stroke();
+  };
+  if (props.showClusterShapes) {
+    aCtx.lineWidth = 0.8;
+    aCtx.strokeStyle = "#286667";
+    appSettings.basemapPolygons.forEach(displayPolygons);
+  }
+  // Labels
+  if (props.showClusterLabels) {
+    // Label lines
+    aCtx.lineWidth = 0.8;
+    aCtx.strokeStyle = "#286667";
+    appSettings.basemapLabelsLines.forEach(displayPolygons);
 
-  let bgCtx = bgCanvas.node().getContext("2d");
+    // Label text
+    const yOffset = 6;
+    aCtx.font = '16px "IBM Plex Serif", serif';
+    aCtx.lineWidth = 4;
+    aCtx.lineJoin = "round";
+    aCtx.lineCap = "round";
+    aCtx.strokeStyle = "#9ba7a9";
+    aCtx.fillStyle = "#286667";
+    appSettings.basemapLabels.forEach((d) => {
+      aCtx.textAlign = d.anchor || "center";
+      aCtx.strokeText(d.label.toUpperCase(), x(d.x), y(d.y) + yOffset);
+      aCtx.fillText(d.label.toUpperCase(), x(d.x), y(d.y) + yOffset);
+    });
+  }
+}
+
+function drawBackground(bgCtx, sizing) {
+  const margin = sizing.margin;
+  const width = sizing.width;
+  const height = sizing.height;
+  const nodeMargin = sizing.nodeMargin;
+  const x = sizing.x;
+  const y = sizing.y;
+  const sizeRatio = sizing.sizeRatio;
 
   if (props.quickButUgly) {
     bgCtx.fillStyle = "#9ba7a9";
@@ -788,45 +841,6 @@ function updateBackground() {
     );
   }
 
-  // Annotations
-  // Polygons & lines
-  const displayPolygons = function (shape) {
-    aCtx.beginPath();
-    shape.forEach((d, i) => {
-      if (i == 0) {
-        aCtx.moveTo(x(d[0]), y(d[1]));
-      } else {
-        aCtx.lineTo(x(d[0]), y(d[1]));
-      }
-    });
-    aCtx.stroke();
-  };
-  if (props.showClusterShapes) {
-    aCtx.lineWidth = 0.8;
-    aCtx.strokeStyle = "#286667";
-    appSettings.basemapPolygons.forEach(displayPolygons);
-  }
-  // Labels
-  if (props.showClusterLabels) {
-    // Label lines
-    aCtx.lineWidth = 0.8;
-    aCtx.strokeStyle = "#286667";
-    appSettings.basemapLabelsLines.forEach(displayPolygons);
-
-    // Label text
-    const yOffset = 6;
-    aCtx.font = '16px "IBM Plex Serif", serif';
-    aCtx.lineWidth = 4;
-    aCtx.lineJoin = "round";
-    aCtx.lineCap = "round";
-    aCtx.strokeStyle = "#9ba7a9";
-    aCtx.fillStyle = "#286667";
-    appSettings.basemapLabels.forEach((d) => {
-      aCtx.textAlign = d.anchor || "center";
-      aCtx.strokeText(d.label.toUpperCase(), x(d.x), y(d.y) + yOffset);
-      aCtx.fillText(d.label.toUpperCase(), x(d.x), y(d.y) + yOffset);
-    });
-  }
 }
 
 function getSizing() {
@@ -840,6 +854,58 @@ function getSizing() {
 
   // set the dimensions and margins of the graph
   ns.margin = { top: 20, right: 80, bottom: 20, left: 80 };
+  ns.width = containerWidth - ns.margin.left - ns.margin.right;
+  ns.height = containerHeight - ns.margin.top - ns.margin.bottom;
+  ns.nodeMargin = 8;
+
+  // Normalize ranges so that the two axes correspond (in the data)
+  var xRange = d3.extent(data, (d) => d.x);
+  var yRange = d3.extent(data, (d) => d.y);
+  if (xRange[1] - xRange[0] > yRange[1] - yRange[0]) {
+    let yMean = 0.5 * (yRange[0] + yRange[1]);
+    yRange[0] = yMean - 0.5 * (xRange[1] - xRange[0]);
+    yRange[1] = yMean + 0.5 * (xRange[1] - xRange[0]);
+  } else {
+    let xMean = 0.5 * (xRange[0] + xRange[1]);
+    xRange[0] = xMean - 0.5 * (yRange[1] - yRange[0]);
+    xRange[1] = xMean + 0.5 * (yRange[1] - yRange[0]);
+  }
+
+  // Normalize ranges so that the two axes correspond (in the picture)
+  var xPicRange = [
+    ns.margin.left + 3 * ns.nodeMargin,
+    ns.margin.left + ns.width - 3 * ns.nodeMargin,
+  ];
+  var yPicRange = [
+    ns.margin.top + 3 * ns.nodeMargin,
+    ns.margin.top + ns.height - 3 * ns.nodeMargin,
+  ];
+  if (xPicRange[1] - xPicRange[0] < yPicRange[1] - yPicRange[0]) {
+    let yMean = 0.5 * (yPicRange[0] + yPicRange[1]);
+    yPicRange[0] = yMean - 0.5 * (xPicRange[1] - xPicRange[0]);
+    yPicRange[1] = yMean + 0.5 * (xPicRange[1] - xPicRange[0]);
+  } else {
+    let xMean = 0.5 * (xPicRange[0] + xPicRange[1]);
+    xPicRange[0] = xMean - 0.5 * (yPicRange[1] - yPicRange[0]);
+    xPicRange[1] = xMean + 0.5 * (yPicRange[1] - yPicRange[0]);
+  }
+
+  // Add X axis
+  ns.x = d3.scaleLinear().domain(xRange).range(xPicRange);
+
+  // Add Y axis
+  ns.y = d3.scaleLinear().domain(yRange).range([yPicRange[1], yPicRange[0]]);
+
+  ns.sizeRatio = appSettings.basemapNodeSizeRatio * 0.3;
+
+  return ns;
+}
+
+function getExportSizing(containerWidth, containerHeight, outputMargin) {
+  let ns = {};
+
+  // set the dimensions and margins of the graph
+  ns.margin = { top: outputMargin, right: outputMargin, bottom: outputMargin, left: outputMargin };
   ns.width = containerWidth - ns.margin.left - ns.margin.right;
   ns.height = containerHeight - ns.margin.top - ns.margin.bottom;
   ns.nodeMargin = 8;
@@ -955,22 +1021,34 @@ function exportImage() {
 }
 
 function buildExportImage() {
+
+  // Compute sizing
   const exportCanvasSize = 2400
-  const exportCanvasSizeMargin = {
-    left: 24,
-    right: 24,
-    top: 24,
-    bottom: 24,
-  }
+  const exportMargin = 24
+  const sizing =  getExportSizing(exportCanvasSize, exportCanvasSize, exportMargin)
+
+  const margin = sizing.margin;
+  const width = sizing.width;
+  const height = sizing.height;
+  const nodeMargin = sizing.nodeMargin;
+  const x = sizing.x;
+  const y = sizing.y;
+  const sizeRatio = sizing.sizeRatio;
+
   // Set export canvas size
   let exportCanvas = d3
-    .select("#basemap-container canvas.exportCanvas")
-    .attr("width", exportCanvasSize + exportCanvasSizeMargin.left + exportCanvasSizeMargin.right)
-    .attr("height", exportCanvasSize + exportCanvasSizeMargin.top + exportCanvasSizeMargin.bottom);
-  // alert("TODO: export image")
+    .select("#hidden-canvas-container canvas.exportCanvas")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom);
+  let expCtx = exportCanvas.node().getContext("2d")
+  drawBackground(expCtx, sizing)
 
+  expCtx.canvas.toBlob(function(blob) {
+    saveAs(blob, "Network viz.png");
+  }, "image/png");
+  
   setTimeout(function(){
-    // Display message
+    // Hide message
     let msg = d3.select("#basemap-container .messaging .message")
     msg
       .text("")
