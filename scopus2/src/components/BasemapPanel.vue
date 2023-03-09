@@ -219,7 +219,7 @@ function updateHighlight() {
     .attr("height", height + margin.top + margin.bottom);
   let hlCtx = hlCanvas.node().getContext("2d");
 
-  drawHighlights(hlCtx, sizing, highlights)
+  drawHighlights(hlCtx, sizing, highlights, 1)
 
   let lbCanvas = d3
     .select("#basemap-container canvas.lbCanvas")
@@ -580,7 +580,7 @@ function updateBackground() {
   aCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset to avoid any problem
   aCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
-  drawAnnotations(aCtx, sizing, 1);
+  drawAnnotations(aCtx, sizing, 1, 1);
 }
 
 function drawBackground(bgCtx, sizing) {
@@ -696,7 +696,7 @@ function drawBackground(bgCtx, sizing) {
 
 }
 
-function drawHighlights(hlCtx, sizing, highlights){
+function drawHighlights(hlCtx, sizing, highlights, dotRatio){
   const margin = sizing.margin;
   const width = sizing.width;
   const height = sizing.height;
@@ -815,7 +815,7 @@ function drawHighlights(hlCtx, sizing, highlights){
       hlCtx.fillStyle = "#FFFFFFBB";
       filteredData.forEach((d) => {
           hlCtx.beginPath();
-          hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + .8, 0, 2 * Math.PI);
+          hlCtx.arc(x(d.x), y(d.y), dotRatio * sizeRatio * d.size + .8, 0, 2 * Math.PI);
           hlCtx.fill();
         });
     }
@@ -825,7 +825,7 @@ function drawHighlights(hlCtx, sizing, highlights){
       // Add dots (highlight)
       hlCtx.fillStyle = "#6c655e";
       data.forEach((d) => {
-        hlCtx.fillRect(x(d.x), y(d.y), 2 * (sizeRatio * d.size + 0.5), 2 * (sizeRatio * d.size + 0.5));
+        hlCtx.fillRect(x(d.x), y(d.y), 2 * (dotRatio * sizeRatio * d.size + 0.5), 2 * (sizeRatio * d.size + 0.5));
       });
     } else {
       // No highlights: just show the dots
@@ -833,14 +833,14 @@ function drawHighlights(hlCtx, sizing, highlights){
       hlCtx.fillStyle = "#6c655e";
       data.forEach((d) => {
         hlCtx.beginPath();
-        hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + 0.5, 0, 2 * Math.PI);
+        hlCtx.arc(x(d.x), y(d.y), dotRatio * sizeRatio * d.size + 0.5, 0, 2 * Math.PI);
         hlCtx.fill();
       });
     }
   }
 }
 
-function drawAnnotations(aCtx, sizing, labelRatio){
+function drawAnnotations(aCtx, sizing, labelRatio, thicknessRatio){
     const margin = sizing.margin;
     const width = sizing.width;
     const height = sizing.height;
@@ -863,14 +863,14 @@ function drawAnnotations(aCtx, sizing, labelRatio){
       aCtx.stroke();
     };
     if (props.showClusterShapes) {
-      aCtx.lineWidth = 0.8;
+      aCtx.lineWidth = thicknessRatio*0.8;
       aCtx.strokeStyle = "#286667";
       appSettings.basemapPolygons.forEach(displayPolygons);
     }
     // Labels
     if (props.showClusterLabels) {
       // Label lines
-      aCtx.lineWidth = 0.8;
+      aCtx.lineWidth = thicknessRatio*0.8;
       aCtx.strokeStyle = "#286667";
       appSettings.basemapLabelsLines.forEach(displayPolygons);
 
@@ -1061,7 +1061,7 @@ function exportImage() {
   // Display message
   let msg = d3.select("#basemap-container .messaging .message")
   msg
-    .text("EXPORTING...")
+    .text("EXPORTING, please wait...")
     .style("display", "block")
 
   setTimeout(buildExportImage, 0)
@@ -1070,8 +1070,8 @@ function exportImage() {
 function buildExportImage() {
 
   // Compute sizing
-  const exportCanvasSize = 2400
-  const exportMargin = 128
+  const exportCanvasSize = 3200
+  const exportMargin = 300
   const sizing =  getExportSizing(exportCanvasSize, exportCanvasSize, exportMargin)
 
   const margin = sizing.margin;
@@ -1098,15 +1098,15 @@ function buildExportImage() {
 
   // Draw
   drawBackground(expCtx, sizing)
-  drawAnnotations(expCtx, sizing, 1.8)
+  drawAnnotations(expCtx, sizing, 2.8, 1.8)
 
   tmpCtx.clearRect(0, 0, tmpCtx.canvas.width, tmpCtx.canvas.height)
-  drawHighlights(tmpCtx, sizing, props.highlights)
+  drawHighlights(tmpCtx, sizing, props.highlights, 5)
   expCtx.drawImage(tmpCtx.canvas, 0, 0)
 
   let orderedNodes = getOrderedNodes(data, props.highlights)
   tmpCtx.clearRect(0, 0, tmpCtx.canvas.width, tmpCtx.canvas.height)
-  drawLabels(tmpCtx, expCtx, sizing, orderedNodes, props.highlights, 2)
+  drawLabels(tmpCtx, expCtx, sizing, orderedNodes, props.highlights, 2.4)
 
   expCtx.canvas.toBlob(function(blob) {
     saveAs(blob, "Network viz.png");
