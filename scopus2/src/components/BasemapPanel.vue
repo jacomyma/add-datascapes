@@ -14,24 +14,22 @@
       <!-- Annotations -->
       <canvas class="aCanvas"></canvas>
       <!-- message -->
-      <div class="messaging" style="display: flex; flex-grow: 1; flex-direction: column; justify-content: center;">
+      <div class="messaging" style="display: flex; flex-grow: 1; flex-direction: column; justify-content: center; pointer-events: none;">
         <div class="message"></div>
-      </div>
-      <!-- UI -->
-      <div class="basemap-ui" style="display: flex; flex-grow: 1; flex-direction: column; justify-content: flex-end;">
-        <div style="height: 42px; padding-left:6px;">
-          <button
-            class="pure-button"
-            style="margin-right: 12px"
-            @click="exportImage"
-          >
-            Export image
-          </button>
-        </div>
       </div>
     </div>
     <div id="basemap-tooltip" class="card"></div>
     <div id="hidden-canvas-container"><canvas class="exportCanvas"></canvas></div>
+  </div>
+  <!-- UI -->
+  <div style="height: 42px; padding-left:6px; bottom: 0px; left: 0px; position: absolute;">
+    <button
+      class="pure-button"
+      style="margin-right: 12px"
+      @click="exportImage"
+    >
+      Export image
+    </button>
   </div>
 </template>
 
@@ -269,121 +267,153 @@ function updateHighlight() {
 
   let orderedNodes;
 
+  let drawHighlights = function(sizing){
+    const margin = sizing.margin;
+    const width = sizing.width;
+    const height = sizing.height;
+    const x = sizing.x;
+    const y = sizing.y;
+    const sizeRatio = sizing.sizeRatio;
+    const nodeSizeOffset = 16;
+
+    if (highlights) {
+      const filteredData = data.filter(d => d.highlight)
+      if (props.quickButUgly) {
+        // Add dots (highlight halo)
+        filteredData.forEach(d => {
+            let halfsize = sizeRatio * d.size + 1.2 * nodeSizeOffset
+            hlCtx.fillStyle = "rgba(255,255,255,"+(0.5 * d.intensity)+")";
+            hlCtx.fillRect(
+              x(d.x) - halfsize,
+              y(d.y) - halfsize,
+              2 * halfsize,
+              2 * halfsize,
+            )
+          });
+      } else {
+        // // Hexbin
+        // const hsize = Math.min(width, height) * 0.04; // Hex radius
+        // var inputForHexbinFun = []
+        // filteredData.forEach(function(d) {
+        //   inputForHexbinFun.push( [x(d.x), y(d.y)] )
+        // })
+        // // Prepare a color palette
+        // var color = d3.scalePow()
+        //     .exponent(0.666)
+        //     .domain([0, 60]) // Number of points (order of magnitude)
+        //     .range(["transparent",  "#EEEEEE"])
+        //     .clamp(true)
+        // // Compute the hexbin data
+        // var hexbin = d3hexbin.hexbin()
+        //   .radius(hsize) // size of the bin in px
+        //   .extent([ [0, 0], [width + margin.left + margin.right, height + margin.top + margin.bottom] ])
+        // // Draw
+        // hexbin(inputForHexbinFun).forEach(h => {
+        //   hlCtx.fillStyle = color(h.length);
+        //   hlCtx.beginPath();
+        //   hlCtx.moveTo(h.x + hsize * Math.cos(Math.PI/6), h.y + hsize * Math.sin(Math.PI/6));
+        //   for (let side=0; side < 7; side++) {
+        //     hlCtx.lineTo(h.x + hsize * Math.cos(Math.PI/6 + side * 2 * Math.PI/6), h.y + hsize * Math.sin(Math.PI/6 + side * 2 * Math.PI/6));
+        //   }
+        //   hlCtx.fill();
+        // });
+
+        // /// Compute and draw density contours
+        // const densityBandwidth = Math.min(width, height) * 0.03
+        // const densityThresholds = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(d => 0.01*Math.pow(1.6,d))
+        // const densityContourColor = "#FFFFFF"
+        // const densityContourThickness = 1
+        // // Compute
+        // let contours = d3.contourDensity()
+        //     .x(d => x(d.x))
+        //     .y(d => y(d.y))
+        //     .weight(d => d.score)
+        //     .size([width + margin.left + margin.right, height + margin.top + margin.bottom])
+        //     .cellSize(Math.min(width, height)/256)
+        //     .bandwidth(densityBandwidth)
+        //     .thresholds(densityThresholds)
+        //   (filteredData);
+        // // Draw density contours
+        // hlCtx.strokeStyle = densityContourColor;
+        // hlCtx.lineWidth = densityContourThickness;
+        // const generator = d3.geoPath().context(hlCtx);
+        // contours.forEach(multipolygon => {
+        //   hlCtx.beginPath();
+        //   generator(multipolygon)
+        //   hlCtx.stroke();
+        // });
+
+        // Improvised KDE
+        const densityRadius = Math.min(width, height) * 0.03 // aka bandwidth
+        const dotRadius =  Math.min(width, height) * 0.26
+        // Paint it black
+        hlCtx.fillStyle = "#000000";
+        hlCtx.fillRect(0, 0, hlCtx.canvas.width, hlCtx.canvas.height);
+        // Draw dots semi-transparently
+        hlCtx.fillStyle = "#FFFFFF55";
+        filteredData.forEach((d) => {
+            hlCtx.beginPath();
+            hlCtx.arc(x(d.x), y(d.y), sizeRatio * dotRadius, 0, 2 * Math.PI);
+            hlCtx.fill();
+          })
+        // Blur (bandwidth)
+        StackBlur.canvasRGB(
+          hlCtx.canvas,
+          0,
+          0,
+          hlCtx.canvas.width,
+          hlCtx.canvas.height,
+          densityRadius
+        )
+        // Edit imagedata directly
+        let imgd = hlCtx.getImageData(0, 0, hlCtx.canvas.width, hlCtx.canvas.height)
+        const steepness = 0.01
+        const levels = 6
+        for (let i=0; i<imgd.data.length; i+=4) {
+          let lvl = 255 * Math.log(1+steepness*imgd.data[i])/Math.log(1+steepness*255)
+          lvl = Math.floor(lvl * levels/255) * 255/levels
+          lvl = Math.floor(lvl)
+          // Rewrite the pixel as white with transparency
+          imgd.data[i  ] = 255
+          imgd.data[i+1] = 255
+          imgd.data[i+2] = 255
+          imgd.data[i+3] = lvl
+        }
+        hlCtx.putImageData(imgd, 0, 0)
+        
+        
+        // Add dots (highlight)
+        hlCtx.fillStyle = "#FFFFFFBB";
+        filteredData.forEach((d) => {
+            hlCtx.beginPath();
+            hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + .8, 0, 2 * Math.PI);
+            hlCtx.fill();
+          });
+      }
+    } else {
+      if (props.quickButUgly) {
+        // No highlights: just show the dots
+        // Add dots (highlight)
+        hlCtx.fillStyle = "#6c655e";
+        data.forEach((d) => {
+          hlCtx.fillRect(x(d.x), y(d.y), 2 * (sizeRatio * d.size + 0.5), 2 * (sizeRatio * d.size + 0.5));
+        });
+      } else {
+        // No highlights: just show the dots
+        // Add dots (highlight)
+        hlCtx.fillStyle = "#6c655e";
+        data.forEach((d) => {
+          hlCtx.beginPath();
+          hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + 0.5, 0, 2 * Math.PI);
+          hlCtx.fill();
+        });
+      }
+    }
+  }
+  drawHighlights(sizing)
+
   if (highlights) {
     const filteredData = data.filter(d => d.highlight)
-    if (props.quickButUgly) {
-      // Add dots (highlight halo)
-      filteredData.forEach(d => {
-          let halfsize = sizeRatio * d.size + 1.2 * nodeSizeOffset
-          hlCtx.fillStyle = "rgba(255,255,255,"+(0.5 * d.intensity)+")";
-          hlCtx.fillRect(
-            x(d.x) - halfsize,
-            y(d.y) - halfsize,
-            2 * halfsize,
-            2 * halfsize,
-          )
-        });
-    } else {
-      // // Hexbin
-      // const hsize = Math.min(width, height) * 0.04; // Hex radius
-      // var inputForHexbinFun = []
-      // filteredData.forEach(function(d) {
-      //   inputForHexbinFun.push( [x(d.x), y(d.y)] )
-      // })
-      // // Prepare a color palette
-      // var color = d3.scalePow()
-      //     .exponent(0.666)
-      //     .domain([0, 60]) // Number of points (order of magnitude)
-      //     .range(["transparent",  "#EEEEEE"])
-      //     .clamp(true)
-      // // Compute the hexbin data
-      // var hexbin = d3hexbin.hexbin()
-      //   .radius(hsize) // size of the bin in px
-      //   .extent([ [0, 0], [width + margin.left + margin.right, height + margin.top + margin.bottom] ])
-      // // Draw
-      // hexbin(inputForHexbinFun).forEach(h => {
-      //   hlCtx.fillStyle = color(h.length);
-      //   hlCtx.beginPath();
-      //   hlCtx.moveTo(h.x + hsize * Math.cos(Math.PI/6), h.y + hsize * Math.sin(Math.PI/6));
-      //   for (let side=0; side < 7; side++) {
-      //     hlCtx.lineTo(h.x + hsize * Math.cos(Math.PI/6 + side * 2 * Math.PI/6), h.y + hsize * Math.sin(Math.PI/6 + side * 2 * Math.PI/6));
-      //   }
-      //   hlCtx.fill();
-      // });
-
-      // /// Compute and draw density contours
-      // const densityBandwidth = Math.min(width, height) * 0.03
-      // const densityThresholds = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(d => 0.01*Math.pow(1.6,d))
-      // const densityContourColor = "#FFFFFF"
-      // const densityContourThickness = 1
-      // // Compute
-      // let contours = d3.contourDensity()
-      //     .x(d => x(d.x))
-      //     .y(d => y(d.y))
-      //     .weight(d => d.score)
-      //     .size([width + margin.left + margin.right, height + margin.top + margin.bottom])
-      //     .cellSize(Math.min(width, height)/256)
-      //     .bandwidth(densityBandwidth)
-      //     .thresholds(densityThresholds)
-      //   (filteredData);
-      // // Draw density contours
-      // hlCtx.strokeStyle = densityContourColor;
-      // hlCtx.lineWidth = densityContourThickness;
-      // const generator = d3.geoPath().context(hlCtx);
-      // contours.forEach(multipolygon => {
-      //   hlCtx.beginPath();
-      //   generator(multipolygon)
-      //   hlCtx.stroke();
-      // });
-
-      // Improvised KDE
-      const densityRadius = Math.min(width, height) * 0.03 // aka bandwidth
-      const dotRadius =  Math.min(width, height) * 0.26
-      // Paint it black
-      hlCtx.fillStyle = "#000000";
-      hlCtx.fillRect(0, 0, hlCtx.canvas.width, hlCtx.canvas.height);
-      // Draw dots semi-transparently
-      hlCtx.fillStyle = "#FFFFFF55";
-      filteredData.forEach((d) => {
-          hlCtx.beginPath();
-          hlCtx.arc(x(d.x), y(d.y), sizeRatio * dotRadius, 0, 2 * Math.PI);
-          hlCtx.fill();
-        })
-      // Blur (bandwidth)
-      StackBlur.canvasRGB(
-        hlCtx.canvas,
-        0,
-        0,
-        hlCtx.canvas.width,
-        hlCtx.canvas.height,
-        densityRadius
-      )
-      // Edit imagedata directly
-      let imgd = hlCtx.getImageData(0, 0, hlCtx.canvas.width, hlCtx.canvas.height)
-      const steepness = 0.01
-      const levels = 6
-      for (let i=0; i<imgd.data.length; i+=4) {
-        let lvl = 255 * Math.log(1+steepness*imgd.data[i])/Math.log(1+steepness*255)
-        lvl = Math.floor(lvl * levels/255) * 255/levels
-        lvl = Math.floor(lvl)
-        // Rewrite the pixel as white with transparency
-        imgd.data[i  ] = 255
-        imgd.data[i+1] = 255
-        imgd.data[i+2] = 255
-        imgd.data[i+3] = lvl
-      }
-      hlCtx.putImageData(imgd, 0, 0)
-      
-      
-      // Add dots (highlight)
-      hlCtx.fillStyle = "#FFFFFFBB";
-      filteredData.forEach((d) => {
-          hlCtx.beginPath();
-          hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + .8, 0, 2 * Math.PI);
-          hlCtx.fill();
-        });
-    }
-
     // Order nodes for labels
     orderedNodes = filteredData.slice(0);
     orderedNodes.sort(function(a,b){return b.score - a.score})
@@ -391,24 +421,6 @@ function updateHighlight() {
     lCtx.strokeStyle = "#999785";
     lCtx.fillStyle = "#FFFFFF";
   } else {
-    if (props.quickButUgly) {
-      // No highlights: just show the dots
-      // Add dots (highlight)
-      hlCtx.fillStyle = "#6c655e";
-      data.forEach((d) => {
-        hlCtx.fillRect(x(d.x), y(d.y), 2 * (sizeRatio * d.size + 0.5), 2 * (sizeRatio * d.size + 0.5));
-      });
-    } else {
-      // No highlights: just show the dots
-      // Add dots (highlight)
-      hlCtx.fillStyle = "#6c655e";
-      data.forEach((d) => {
-        hlCtx.beginPath();
-        hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + 0.5, 0, 2 * Math.PI);
-        hlCtx.fill();
-      });
-    }
-
     // Order nodes for labels
     orderedNodes = data.slice(0);
     lCtx.strokeStyle = "#999785";
