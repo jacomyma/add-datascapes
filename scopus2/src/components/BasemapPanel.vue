@@ -592,6 +592,9 @@ function drawBackground(bgCtx, sizing) {
   const y = sizing.y;
   const sizeRatio = sizing.sizeRatio;
 
+  const dotRadius = sizeRatio * appSettings.heatmapSpread * Math.min(width, height)/500
+  console.log("dotRadius", dotRadius)
+
   if (props.quickButUgly) {
     bgCtx.fillStyle = "#9ba7a9";
     bgCtx.fillRect(0, 0, bgCtx.canvas.width, bgCtx.canvas.height);
@@ -599,7 +602,7 @@ function drawBackground(bgCtx, sizing) {
     // Add dots background (squares)
     bgCtx.fillStyle = "#999785";
     data.forEach((d) => {
-      let halfsize = sizeRatio * d.size + nodeMargin
+      let halfsize = sizeRatio * d.size + dotRadius * (1 + nodeMargin)
       bgCtx.fillRect(
         x(d.x) - halfsize,
         y(d.y) - halfsize,
@@ -611,7 +614,7 @@ function drawBackground(bgCtx, sizing) {
     // Add dots (squares)
     bgCtx.fillStyle = "#504132";
     data.forEach((d) => {
-      let halfsize = sizeRatio * d.size
+      let halfsize = sizeRatio * d.size + dotRadius
       bgCtx.fillRect(
         x(d.x) - halfsize,
         y(d.y) - halfsize,
@@ -626,7 +629,7 @@ function drawBackground(bgCtx, sizing) {
     bgCtx.fillStyle = "rgba(255,255,255)";
     data.forEach((d) => {
       bgCtx.beginPath();
-      bgCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + sizeRatio * appSettings.heatmapSpread, 0, 2 * Math.PI);
+      bgCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + dotRadius, 0, 2 * Math.PI);
       bgCtx.fill();
     });
     StackBlur.canvasRGB(
@@ -649,7 +652,7 @@ function drawBackground(bgCtx, sizing) {
     bgCtx.fillStyle = "#999785";
     data.forEach((d) => {
       bgCtx.beginPath();
-      bgCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + nodeMargin, 0, 2 * Math.PI);
+      bgCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + dotRadius * (1 + nodeMargin), 0, 2 * Math.PI);
       bgCtx.fill();
     });
 
@@ -657,7 +660,7 @@ function drawBackground(bgCtx, sizing) {
     bgCtx.fillStyle = "#504132";
     data.forEach((d) => {
       bgCtx.beginPath();
-      bgCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + 0.5, 0, 2 * Math.PI);
+      bgCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + dotRadius * 0.5, 0, 2 * Math.PI);
       bgCtx.fill();
     });
 
@@ -690,7 +693,7 @@ function drawBackground(bgCtx, sizing) {
       0,
       bgCtx.canvas.width,
       bgCtx.canvas.height,
-      bgCtx.canvas.width / 128
+      bgCtx.canvas.width / 100
     );
   }
 
