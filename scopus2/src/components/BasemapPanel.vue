@@ -661,10 +661,6 @@ function updateBackground() {
   const margin = sizing.margin;
   const width = sizing.width;
   const height = sizing.height;
-  const nodeMargin = sizing.nodeMargin;
-  const x = sizing.x;
-  const y = sizing.y;
-  const sizeRatio = sizing.sizeRatio;
 
   let bgCanvas = d3
     .select("#basemap-container canvas.bgCanvas")
@@ -688,46 +684,8 @@ function updateBackground() {
   let aCtx = aCanvas.node().getContext("2d");
   aCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset to avoid any problem
   aCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
-  
-  // Annotations
-  // Polygons & lines
-  const displayPolygons = function (shape) {
-    aCtx.beginPath();
-    shape.forEach((d, i) => {
-      if (i == 0) {
-        aCtx.moveTo(x(d[0]), y(d[1]));
-      } else {
-        aCtx.lineTo(x(d[0]), y(d[1]));
-      }
-    });
-    aCtx.stroke();
-  };
-  if (props.showClusterShapes) {
-    aCtx.lineWidth = 0.8;
-    aCtx.strokeStyle = "#286667";
-    appSettings.basemapPolygons.forEach(displayPolygons);
-  }
-  // Labels
-  if (props.showClusterLabels) {
-    // Label lines
-    aCtx.lineWidth = 0.8;
-    aCtx.strokeStyle = "#286667";
-    appSettings.basemapLabelsLines.forEach(displayPolygons);
 
-    // Label text
-    const yOffset = 6;
-    aCtx.font = '16px "IBM Plex Serif", serif';
-    aCtx.lineWidth = 4;
-    aCtx.lineJoin = "round";
-    aCtx.lineCap = "round";
-    aCtx.strokeStyle = "#9ba7a9";
-    aCtx.fillStyle = "#286667";
-    appSettings.basemapLabels.forEach((d) => {
-      aCtx.textAlign = d.anchor || "center";
-      aCtx.strokeText(d.label.toUpperCase(), x(d.x), y(d.y) + yOffset);
-      aCtx.fillText(d.label.toUpperCase(), x(d.x), y(d.y) + yOffset);
-    });
-  }
+  drawAnnotations(aCtx, sizing, 1);
 }
 
 function drawBackground(bgCtx, sizing) {
@@ -842,6 +800,56 @@ function drawBackground(bgCtx, sizing) {
   }
 
 }
+
+function drawAnnotations(aCtx, sizing, labelRatio){
+    const margin = sizing.margin;
+    const width = sizing.width;
+    const height = sizing.height;
+    const nodeMargin = sizing.nodeMargin;
+    const x = sizing.x;
+    const y = sizing.y;
+    const sizeRatio = sizing.sizeRatio;
+    
+    // Annotations
+    // Polygons & lines
+    const displayPolygons = function (shape) {
+      aCtx.beginPath();
+      shape.forEach((d, i) => {
+        if (i == 0) {
+          aCtx.moveTo(x(d[0]), y(d[1]));
+        } else {
+          aCtx.lineTo(x(d[0]), y(d[1]));
+        }
+      });
+      aCtx.stroke();
+    };
+    if (props.showClusterShapes) {
+      aCtx.lineWidth = 0.8;
+      aCtx.strokeStyle = "#286667";
+      appSettings.basemapPolygons.forEach(displayPolygons);
+    }
+    // Labels
+    if (props.showClusterLabels) {
+      // Label lines
+      aCtx.lineWidth = 0.8;
+      aCtx.strokeStyle = "#286667";
+      appSettings.basemapLabelsLines.forEach(displayPolygons);
+
+      // Label text
+      const yOffset = 6;
+      aCtx.font = Math.round(16*labelRatio)+'px "IBM Plex Serif", serif';
+      aCtx.lineWidth = 4;
+      aCtx.lineJoin = "round";
+      aCtx.lineCap = "round";
+      aCtx.strokeStyle = "#9ba7a9";
+      aCtx.fillStyle = "#286667";
+      appSettings.basemapLabels.forEach((d) => {
+        aCtx.textAlign = d.anchor || "center";
+        aCtx.strokeText(d.label.toUpperCase(), x(d.x), y(d.y) + yOffset);
+        aCtx.fillText(d.label.toUpperCase(), x(d.x), y(d.y) + yOffset);
+      });
+    }
+  }
 
 function getSizing() {
   let ns = {};
@@ -1024,7 +1032,7 @@ function buildExportImage() {
 
   // Compute sizing
   const exportCanvasSize = 2400
-  const exportMargin = 24
+  const exportMargin = 128
   const sizing =  getExportSizing(exportCanvasSize, exportCanvasSize, exportMargin)
 
   const margin = sizing.margin;
@@ -1042,6 +1050,7 @@ function buildExportImage() {
     .attr("height", height + margin.top + margin.bottom);
   let expCtx = exportCanvas.node().getContext("2d")
   drawBackground(expCtx, sizing)
+  drawAnnotations(expCtx, sizing, 1.8)
 
   expCtx.canvas.toBlob(function(blob) {
     saveAs(blob, "Network viz.png");
