@@ -201,30 +201,7 @@ function updateHighlight() {
     return
   }
 
-  // Get data
-  let neIndex = {};
-  let max = 0;
-  let count = 0;
-  let total = 0;
-  props.focusedEntities.forEach(entityObj => {
-    let score = entityObj.score;
-    neIndex[entityObj.label.toLowerCase()] = score;
-    max = Math.max(max, score)
-    total += score;
-    count++;
-  });
-
-  const baseOpacity = 0.2;
-  const saturation = 1000; // At that point, light is too much...
-  const average = baseOpacity * total/(max*count);
-  const ratio1 = (average<0.3)?(0.3/average):(1);
-  const ratio2 = Math.min(1, saturation / (ratio1 * total / max));
-  data.forEach((d) => {
-    let key = d.key.toLowerCase();
-    d.highlight = !!neIndex[key];
-    d.score = neIndex[key] || 0;
-    d.intensity = Math.max(0, Math.min(1, ratio2 * ratio1 * baseOpacity * d.score/max));
-  });
+  updateDataHL()
 
   const highlights = props.highlights;
 
@@ -262,115 +239,17 @@ function updateHighlight() {
   let lCtx = lCanvas.node().getContext("2d");
   lCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset to avoid any problem
   lCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  let orderedNodes = getOrderedNodes(data, highlights)
+  
+  drawLabels(lbCtx, lCtx, sizing, orderedNodes, highlights, 1)
+
+  // Draw nodes in hidden canvas
   let hiddenCanvas = d3
     .select("#basemap-container canvas.hiddenCanvas")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom);
   let hiddenCtx = hiddenCanvas.node().getContext("2d");
-
-  let orderedNodes;
-
-  if (highlights) {
-    const filteredData = data.filter(d => d.highlight)
-    // Order nodes for labels
-    orderedNodes = filteredData.slice(0);
-    orderedNodes.sort(function(a,b){return b.score - a.score})
-    orderedNodes = orderedNodes.filter((d,i) => i<8 || (i<250 && d.score>=3))
-    lCtx.strokeStyle = "#999785";
-    lCtx.fillStyle = "#FFFFFF";
-  } else {
-    // Order nodes for labels
-    orderedNodes = data.slice(0);
-    lCtx.strokeStyle = "#999785";
-    lCtx.fillStyle = "#000000";
-  }
-
-  // Order nodes! (to display labels)
-  orderedNodes.sort(function (a, b) {
-    if (a.showlabel) {
-      if (b.showlabel) {
-        return b.score-a.score || b.size - a.size;
-      } else return -1;
-    } else {
-      if (b.showlabel) {
-        return 1;
-      } else return b.score-a.score || b.size - a.size;
-    }
-  });
-
-  orderedNodes.forEach((d,i)=>{
-    d.order = i
-  })
-
-  // Display labels
-  const yOffset = 8;
-  if (props.showLabels) {
-
-    const fontSize = 12;
-    const boxMargin = 6;
-    const labelsToConsider = props.quickButUgly?150:10000;
-    lCtx.font = fontSize + 'px "Nunito", sans-serif';
-    lCtx.textAlign = "center";
-    lCtx.lineWidth = 4;
-    lCtx.lineJoin = "round";
-    lCtx.lineCap = "round";
-    // Bounding box context
-    lbCtx.fillStyle = "#FFFFFF";
-    const skip = 5; // Speed up (precision loss though)
-    let cap = 100; // How many labels fit in screen
-    orderedNodes
-      .filter((d, i) => i < labelsToConsider)
-      .forEach((d,i) => {
-        if (cap <= 0) {
-          return;
-        }
-        const label = d.label;
-        // Bounding box
-        const box = lCtx.measureText(label);
-        const w = box.width + 2 * boxMargin;
-        const h = 0.8 * fontSize + 2 * boxMargin;
-        const xmin = x(d.x) - w / 2;
-        const ymin = y(d.y) - h / 2 + yOffset;
-        const xmax = xmin + w;
-        const ymax = ymin + h;
-
-        let display = true;
-        for (let x = xmin; x < xmax; x += skip) {
-          for (let y = ymin; y < ymax; y += skip) {
-            var p = lbCtx.getImageData(x, y, 1, 1).data;
-            if (p[0] > 0) {
-              x = xmax;
-              y = ymax;
-              display = false;
-            }
-          }
-        }
-
-        if (display) {
-          cap--;
-
-          lbCtx.rect(xmin, ymin, w, h);
-          lbCtx.fill();
-
-          lCtx.strokeText(label, x(d.x), y(d.y) + yOffset);
-          lCtx.fillText(label, x(d.x), y(d.y) + yOffset);
-          d.labelDisplayed = true
-        } else {
-          d.labelDisplayed = false
-        }
-      });
-  }
-
-  // Display message if no entities in the basemap
-  if (props.highlights && props.focusedEntities.length == 0) {
-    lCtx.textAlign = "left";
-    const message = "No entity to display"
-    const msgX = 20
-    const msgY = height + margin.top + margin.bottom - 20
-    lCtx.fillText(message, msgX, msgY);
-  }
-
-  // Draw nodes in hidden canvas
   orderedNodes.sort(function (a, b) {
     if (!a.labelDisplayed) {
       if (!b.labelDisplayed) {
@@ -523,6 +402,152 @@ const caching = (function(){
 
   return ns;
 })();
+
+function updateDataHL(){
+  // Get data
+  let neIndex = {};
+  let max = 0;
+  let count = 0;
+  let total = 0;
+  props.focusedEntities.forEach(entityObj => {
+    let score = entityObj.score;
+    neIndex[entityObj.label.toLowerCase()] = score;
+    max = Math.max(max, score)
+    total += score;
+    count++;
+  });
+
+  const baseOpacity = 0.2;
+  const saturation = 1000; // At that point, light is too much...
+  const average = baseOpacity * total/(max*count);
+  const ratio1 = (average<0.3)?(0.3/average):(1);
+  const ratio2 = Math.min(1, saturation / (ratio1 * total / max));
+  data.forEach((d) => {
+    let key = d.key.toLowerCase();
+    d.highlight = !!neIndex[key];
+    d.score = neIndex[key] || 0;
+    d.intensity = Math.max(0, Math.min(1, ratio2 * ratio1 * baseOpacity * d.score/max));
+  });
+}
+
+function getOrderedNodes(data, highlights) {
+  let orderedNodes
+  
+  // Order nodes! (to display labels)
+  if (highlights) {
+    const filteredData = data.filter(d => d.highlight)
+    // Order nodes for labels
+    orderedNodes = filteredData.slice(0);
+    orderedNodes.sort(function(a,b){return b.score - a.score})
+    orderedNodes = orderedNodes.filter((d,i) => i<8 || (i<250 && d.score>=3))
+  } else {
+    // Order nodes for labels
+    orderedNodes = data.slice(0);
+  }
+
+  orderedNodes.sort(function (a, b) {
+    if (a.showlabel) {
+      if (b.showlabel) {
+        return b.score-a.score || b.size - a.size;
+      } else return -1;
+    } else {
+      if (b.showlabel) {
+        return 1;
+      } else return b.score-a.score || b.size - a.size;
+    }
+  });
+
+  orderedNodes.forEach((d,i)=>{
+    d.order = i
+  })
+
+  return orderedNodes
+}
+
+function drawLabels(lbCtx, lCtx, sizing, orderedNodes, highlights, labelRatio) {
+  const margin = sizing.margin;
+  const width = sizing.width;
+  const height = sizing.height;
+  const x = sizing.x;
+  const y = sizing.y;
+  const sizeRatio = sizing.sizeRatio;
+  const nodeSizeOffset = 16;
+
+  // Display labels
+  const yOffset = 8;
+  if (highlights) {
+    lCtx.strokeStyle = "#999785";
+    lCtx.fillStyle = "#FFFFFF";
+  } else {
+    lCtx.strokeStyle = "#999785";
+    lCtx.fillStyle = "#000000";
+  }
+  if (props.showLabels) {
+
+    const fontSize = Math.round(12*labelRatio);
+    const boxMargin = 6;
+    const labelsToConsider = props.quickButUgly?150:10000;
+    lCtx.font = fontSize + 'px "Nunito", sans-serif';
+    lCtx.textAlign = "center";
+    lCtx.lineWidth = 4;
+    lCtx.lineJoin = "round";
+    lCtx.lineCap = "round";
+    // Bounding box context
+    lbCtx.fillStyle = "#FFFFFF";
+    const skip = 5; // Speed up (precision loss though)
+    let cap = 100; // How many labels fit in screen
+    orderedNodes
+      .filter((d, i) => i < labelsToConsider)
+      .forEach((d,i) => {
+        if (cap <= 0) {
+          return;
+        }
+        const label = d.label;
+        // Bounding box
+        const box = lCtx.measureText(label);
+        const w = box.width + 2 * boxMargin;
+        const h = 0.8 * fontSize + 2 * boxMargin;
+        const xmin = x(d.x) - w / 2;
+        const ymin = y(d.y) - h / 2 + yOffset;
+        const xmax = xmin + w;
+        const ymax = ymin + h;
+
+        let display = true;
+        for (let x = xmin; x < xmax; x += skip) {
+          for (let y = ymin; y < ymax; y += skip) {
+            var p = lbCtx.getImageData(x, y, 1, 1).data;
+            if (p[0] > 0) {
+              x = xmax;
+              y = ymax;
+              display = false;
+            }
+          }
+        }
+
+        if (display) {
+          cap--;
+
+          lbCtx.rect(xmin, ymin, w, h);
+          lbCtx.fill();
+
+          lCtx.strokeText(label, x(d.x), y(d.y) + yOffset);
+          lCtx.fillText(label, x(d.x), y(d.y) + yOffset);
+          d.labelDisplayed = true
+        } else {
+          d.labelDisplayed = false
+        }
+      });
+  }
+
+  // Display message if no entities in the basemap
+  if (props.highlights && props.focusedEntities.length == 0) {
+    lCtx.textAlign = "left";
+    const message = "No entity to display"
+    const msgX = 20
+    const msgY = height + margin.top + margin.bottom - 20
+    lCtx.fillText(message, msgX, msgY);
+  }
+}
 
 function updateBackground() {
   window.polygon = []; // TODO: remove me
@@ -1069,6 +1094,8 @@ function buildExportImage() {
     .attr("height", height + margin.top + margin.bottom);
   let tmpCtx = tmpCanvas.node().getContext("2d")
 
+  updateDataHL()
+
   // Draw
   drawBackground(expCtx, sizing)
   drawAnnotations(expCtx, sizing, 1.8)
@@ -1076,6 +1103,10 @@ function buildExportImage() {
   tmpCtx.clearRect(0, 0, tmpCtx.canvas.width, tmpCtx.canvas.height)
   drawHighlights(tmpCtx, sizing, props.highlights)
   expCtx.drawImage(tmpCtx.canvas, 0, 0)
+
+  let orderedNodes = getOrderedNodes(data, props.highlights)
+  tmpCtx.clearRect(0, 0, tmpCtx.canvas.width, tmpCtx.canvas.height)
+  drawLabels(tmpCtx, expCtx, sizing, orderedNodes, props.highlights, 2)
 
   expCtx.canvas.toBlob(function(blob) {
     saveAs(blob, "Network viz.png");
