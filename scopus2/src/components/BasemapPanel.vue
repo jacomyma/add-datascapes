@@ -826,14 +826,14 @@ function drawHighlights(hlCtx, sizing, highlights, dotRatio){
     if (props.quickButUgly) {
       // No highlights: just show the dots
       // Add dots (highlight)
-      hlCtx.fillStyle = "#6c655e";
+      hlCtx.fillStyle = "#5d554b";
       data.forEach((d) => {
         hlCtx.fillRect(x(d.x), y(d.y), 2 * (dotRatio * sizeRatio * d.size + 0.5), 2 * (sizeRatio * d.size + 0.5));
       });
     } else {
       // No highlights: just show the dots
       // Add dots (highlight)
-      hlCtx.fillStyle = "#6c655e";
+      hlCtx.fillStyle = "#5d554b";
       data.forEach((d) => {
         hlCtx.beginPath();
         hlCtx.arc(x(d.x), y(d.y), dotRatio * sizeRatio * d.size + 0.5, 0, 2 * Math.PI);
