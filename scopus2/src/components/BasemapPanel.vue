@@ -13,6 +13,10 @@
       <canvas class="hiddenCanvas"></canvas>
       <!-- Annotations -->
       <canvas class="aCanvas"></canvas>
+      <!-- message -->
+      <div class="messaging" style="display: flex; flex-grow: 1; flex-direction: column; justify-content: center;">
+        <div class="message"></div>
+      </div>
       <!-- UI -->
       <div class="basemap-ui" style="display: flex; flex-grow: 1; flex-direction: column; justify-content: flex-end;">
         <div style="height: 42px; padding-left:6px;">
@@ -27,6 +31,7 @@
       </div>
     </div>
     <div id="basemap-tooltip" class="card"></div>
+    <div id="hidden-canvas-container"><canvas class="exportCanvas"></canvas></div>
   </div>
 </template>
 
@@ -43,11 +48,13 @@
 .lCanvas,
 .lbCanvas,
 .aCanvas,
+.messaging,
 .basemap-ui {
   position: absolute;
 }
 .lCanvas,
 .aCanvas,
+.messaging,
 .basemap-ui {
   width: 100%;
   height: 100%;
@@ -59,6 +66,17 @@
 #basemap-tooltip {
   font: 12px "Nunito", sans-serif;
   pointer-events: none;
+}
+#hidden-canvas-container{
+  display: none;
+}
+.messaging .message {
+  text-align:center;
+  padding: 12px;
+  background-color: rgba(200, 200, 200, 0.8);
+  font-size: 1.2em;
+  font-weight: bold;
+  display:none;
 }
 </style>
 
@@ -926,6 +944,36 @@ function computeHillshading(imgd) {
 }
 
 function exportImage() {
-  alert("TODO: export image")
+  // Display message
+  let msg = d3.select("#basemap-container .messaging .message")
+  msg
+    .text("EXPORTING...")
+    .style("display", "block")
+
+  setTimeout(buildExportImage, 0)
+}
+
+function buildExportImage() {
+  const exportCanvasSize = 2400
+  const exportCanvasSizeMargin = {
+    left: 24,
+    right: 24,
+    top: 24,
+    bottom: 24,
+  }
+  // Set export canvas size
+  let exportCanvas = d3
+    .select("#basemap-container canvas.exportCanvas")
+    .attr("width", exportCanvasSize + exportCanvasSizeMargin.left + exportCanvasSizeMargin.right)
+    .attr("height", exportCanvasSize + exportCanvasSizeMargin.top + exportCanvasSizeMargin.bottom);
+  // alert("TODO: export image")
+
+  setTimeout(function(){
+    // Display message
+    let msg = d3.select("#basemap-container .messaging .message")
+    msg
+      .text("")
+      .style("display", "none")
+  }, 100)
 }
 </script>
