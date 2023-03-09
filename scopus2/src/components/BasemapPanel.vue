@@ -19,7 +19,7 @@
       </div>
     </div>
     <div id="basemap-tooltip" class="card"></div>
-    <div id="hidden-canvas-container"><canvas class="exportCanvas"></canvas></div>
+    <div id="hidden-canvas-container"><canvas class="exportCanvas"></canvas><canvas class="tempCanvas"></canvas></div>
   </div>
   <!-- UI -->
   <div style="height: 42px; padding-left:6px; bottom: 0px; left: 0px; position: absolute;">
@@ -241,6 +241,9 @@ function updateHighlight() {
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom);
   let hlCtx = hlCanvas.node().getContext("2d");
+
+  drawHighlights(hlCtx, sizing, highlights)
+
   let lbCanvas = d3
     .select("#basemap-container canvas.lbCanvas")
     .attr("width", width + margin.left + margin.right)
@@ -266,151 +269,6 @@ function updateHighlight() {
   let hiddenCtx = hiddenCanvas.node().getContext("2d");
 
   let orderedNodes;
-
-  let drawHighlights = function(sizing){
-    const margin = sizing.margin;
-    const width = sizing.width;
-    const height = sizing.height;
-    const x = sizing.x;
-    const y = sizing.y;
-    const sizeRatio = sizing.sizeRatio;
-    const nodeSizeOffset = 16;
-
-    if (highlights) {
-      const filteredData = data.filter(d => d.highlight)
-      if (props.quickButUgly) {
-        // Add dots (highlight halo)
-        filteredData.forEach(d => {
-            let halfsize = sizeRatio * d.size + 1.2 * nodeSizeOffset
-            hlCtx.fillStyle = "rgba(255,255,255,"+(0.5 * d.intensity)+")";
-            hlCtx.fillRect(
-              x(d.x) - halfsize,
-              y(d.y) - halfsize,
-              2 * halfsize,
-              2 * halfsize,
-            )
-          });
-      } else {
-        // // Hexbin
-        // const hsize = Math.min(width, height) * 0.04; // Hex radius
-        // var inputForHexbinFun = []
-        // filteredData.forEach(function(d) {
-        //   inputForHexbinFun.push( [x(d.x), y(d.y)] )
-        // })
-        // // Prepare a color palette
-        // var color = d3.scalePow()
-        //     .exponent(0.666)
-        //     .domain([0, 60]) // Number of points (order of magnitude)
-        //     .range(["transparent",  "#EEEEEE"])
-        //     .clamp(true)
-        // // Compute the hexbin data
-        // var hexbin = d3hexbin.hexbin()
-        //   .radius(hsize) // size of the bin in px
-        //   .extent([ [0, 0], [width + margin.left + margin.right, height + margin.top + margin.bottom] ])
-        // // Draw
-        // hexbin(inputForHexbinFun).forEach(h => {
-        //   hlCtx.fillStyle = color(h.length);
-        //   hlCtx.beginPath();
-        //   hlCtx.moveTo(h.x + hsize * Math.cos(Math.PI/6), h.y + hsize * Math.sin(Math.PI/6));
-        //   for (let side=0; side < 7; side++) {
-        //     hlCtx.lineTo(h.x + hsize * Math.cos(Math.PI/6 + side * 2 * Math.PI/6), h.y + hsize * Math.sin(Math.PI/6 + side * 2 * Math.PI/6));
-        //   }
-        //   hlCtx.fill();
-        // });
-
-        // /// Compute and draw density contours
-        // const densityBandwidth = Math.min(width, height) * 0.03
-        // const densityThresholds = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(d => 0.01*Math.pow(1.6,d))
-        // const densityContourColor = "#FFFFFF"
-        // const densityContourThickness = 1
-        // // Compute
-        // let contours = d3.contourDensity()
-        //     .x(d => x(d.x))
-        //     .y(d => y(d.y))
-        //     .weight(d => d.score)
-        //     .size([width + margin.left + margin.right, height + margin.top + margin.bottom])
-        //     .cellSize(Math.min(width, height)/256)
-        //     .bandwidth(densityBandwidth)
-        //     .thresholds(densityThresholds)
-        //   (filteredData);
-        // // Draw density contours
-        // hlCtx.strokeStyle = densityContourColor;
-        // hlCtx.lineWidth = densityContourThickness;
-        // const generator = d3.geoPath().context(hlCtx);
-        // contours.forEach(multipolygon => {
-        //   hlCtx.beginPath();
-        //   generator(multipolygon)
-        //   hlCtx.stroke();
-        // });
-
-        // Improvised KDE
-        const densityRadius = Math.min(width, height) * 0.03 // aka bandwidth
-        const dotRadius =  Math.min(width, height) * 0.26
-        // Paint it black
-        hlCtx.fillStyle = "#000000";
-        hlCtx.fillRect(0, 0, hlCtx.canvas.width, hlCtx.canvas.height);
-        // Draw dots semi-transparently
-        hlCtx.fillStyle = "#FFFFFF55";
-        filteredData.forEach((d) => {
-            hlCtx.beginPath();
-            hlCtx.arc(x(d.x), y(d.y), sizeRatio * dotRadius, 0, 2 * Math.PI);
-            hlCtx.fill();
-          })
-        // Blur (bandwidth)
-        StackBlur.canvasRGB(
-          hlCtx.canvas,
-          0,
-          0,
-          hlCtx.canvas.width,
-          hlCtx.canvas.height,
-          densityRadius
-        )
-        // Edit imagedata directly
-        let imgd = hlCtx.getImageData(0, 0, hlCtx.canvas.width, hlCtx.canvas.height)
-        const steepness = 0.01
-        const levels = 6
-        for (let i=0; i<imgd.data.length; i+=4) {
-          let lvl = 255 * Math.log(1+steepness*imgd.data[i])/Math.log(1+steepness*255)
-          lvl = Math.floor(lvl * levels/255) * 255/levels
-          lvl = Math.floor(lvl)
-          // Rewrite the pixel as white with transparency
-          imgd.data[i  ] = 255
-          imgd.data[i+1] = 255
-          imgd.data[i+2] = 255
-          imgd.data[i+3] = lvl
-        }
-        hlCtx.putImageData(imgd, 0, 0)
-        
-        
-        // Add dots (highlight)
-        hlCtx.fillStyle = "#FFFFFFBB";
-        filteredData.forEach((d) => {
-            hlCtx.beginPath();
-            hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + .8, 0, 2 * Math.PI);
-            hlCtx.fill();
-          });
-      }
-    } else {
-      if (props.quickButUgly) {
-        // No highlights: just show the dots
-        // Add dots (highlight)
-        hlCtx.fillStyle = "#6c655e";
-        data.forEach((d) => {
-          hlCtx.fillRect(x(d.x), y(d.y), 2 * (sizeRatio * d.size + 0.5), 2 * (sizeRatio * d.size + 0.5));
-        });
-      } else {
-        // No highlights: just show the dots
-        // Add dots (highlight)
-        hlCtx.fillStyle = "#6c655e";
-        data.forEach((d) => {
-          hlCtx.beginPath();
-          hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + 0.5, 0, 2 * Math.PI);
-          hlCtx.fill();
-        });
-      }
-    }
-  }
-  drawHighlights(sizing)
 
   if (highlights) {
     const filteredData = data.filter(d => d.highlight)
@@ -813,6 +671,150 @@ function drawBackground(bgCtx, sizing) {
 
 }
 
+function drawHighlights(hlCtx, sizing, highlights){
+  const margin = sizing.margin;
+  const width = sizing.width;
+  const height = sizing.height;
+  const x = sizing.x;
+  const y = sizing.y;
+  const sizeRatio = sizing.sizeRatio;
+  const nodeSizeOffset = 16;
+
+  if (highlights) {
+    const filteredData = data.filter(d => d.highlight)
+    if (props.quickButUgly) {
+      // Add dots (highlight halo)
+      filteredData.forEach(d => {
+          let halfsize = sizeRatio * d.size + 1.2 * nodeSizeOffset
+          hlCtx.fillStyle = "rgba(255,255,255,"+(0.5 * d.intensity)+")";
+          hlCtx.fillRect(
+            x(d.x) - halfsize,
+            y(d.y) - halfsize,
+            2 * halfsize,
+            2 * halfsize,
+          )
+        });
+    } else {
+      // // Hexbin
+      // const hsize = Math.min(width, height) * 0.04; // Hex radius
+      // var inputForHexbinFun = []
+      // filteredData.forEach(function(d) {
+      //   inputForHexbinFun.push( [x(d.x), y(d.y)] )
+      // })
+      // // Prepare a color palette
+      // var color = d3.scalePow()
+      //     .exponent(0.666)
+      //     .domain([0, 60]) // Number of points (order of magnitude)
+      //     .range(["transparent",  "#EEEEEE"])
+      //     .clamp(true)
+      // // Compute the hexbin data
+      // var hexbin = d3hexbin.hexbin()
+      //   .radius(hsize) // size of the bin in px
+      //   .extent([ [0, 0], [width + margin.left + margin.right, height + margin.top + margin.bottom] ])
+      // // Draw
+      // hexbin(inputForHexbinFun).forEach(h => {
+      //   hlCtx.fillStyle = color(h.length);
+      //   hlCtx.beginPath();
+      //   hlCtx.moveTo(h.x + hsize * Math.cos(Math.PI/6), h.y + hsize * Math.sin(Math.PI/6));
+      //   for (let side=0; side < 7; side++) {
+      //     hlCtx.lineTo(h.x + hsize * Math.cos(Math.PI/6 + side * 2 * Math.PI/6), h.y + hsize * Math.sin(Math.PI/6 + side * 2 * Math.PI/6));
+      //   }
+      //   hlCtx.fill();
+      // });
+
+      // /// Compute and draw density contours
+      // const densityBandwidth = Math.min(width, height) * 0.03
+      // const densityThresholds = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(d => 0.01*Math.pow(1.6,d))
+      // const densityContourColor = "#FFFFFF"
+      // const densityContourThickness = 1
+      // // Compute
+      // let contours = d3.contourDensity()
+      //     .x(d => x(d.x))
+      //     .y(d => y(d.y))
+      //     .weight(d => d.score)
+      //     .size([width + margin.left + margin.right, height + margin.top + margin.bottom])
+      //     .cellSize(Math.min(width, height)/256)
+      //     .bandwidth(densityBandwidth)
+      //     .thresholds(densityThresholds)
+      //   (filteredData);
+      // // Draw density contours
+      // hlCtx.strokeStyle = densityContourColor;
+      // hlCtx.lineWidth = densityContourThickness;
+      // const generator = d3.geoPath().context(hlCtx);
+      // contours.forEach(multipolygon => {
+      //   hlCtx.beginPath();
+      //   generator(multipolygon)
+      //   hlCtx.stroke();
+      // });
+
+      // Improvised KDE
+      const densityRadius = Math.min(width, height) * 0.03 // aka bandwidth
+      const dotRadius =  Math.min(width, height) * 0.26
+      // Paint it black
+      hlCtx.fillStyle = "#000000";
+      hlCtx.fillRect(0, 0, hlCtx.canvas.width, hlCtx.canvas.height);
+      // Draw dots semi-transparently
+      hlCtx.fillStyle = "#FFFFFF55";
+      filteredData.forEach((d) => {
+          hlCtx.beginPath();
+          hlCtx.arc(x(d.x), y(d.y), sizeRatio * dotRadius, 0, 2 * Math.PI);
+          hlCtx.fill();
+        })
+      // Blur (bandwidth)
+      StackBlur.canvasRGB(
+        hlCtx.canvas,
+        0,
+        0,
+        hlCtx.canvas.width,
+        hlCtx.canvas.height,
+        densityRadius
+      )
+      // Edit imagedata directly
+      let imgd = hlCtx.getImageData(0, 0, hlCtx.canvas.width, hlCtx.canvas.height)
+      const steepness = 0.01
+      const levels = 6
+      for (let i=0; i<imgd.data.length; i+=4) {
+        let lvl = 255 * Math.log(1+steepness*imgd.data[i])/Math.log(1+steepness*255)
+        lvl = Math.floor(lvl * levels/255) * 255/levels
+        lvl = Math.floor(lvl)
+        // Rewrite the pixel as white with transparency
+        imgd.data[i  ] = 255
+        imgd.data[i+1] = 255
+        imgd.data[i+2] = 255
+        imgd.data[i+3] = lvl
+      }
+      hlCtx.putImageData(imgd, 0, 0)
+      
+      
+      // Add dots (highlight)
+      hlCtx.fillStyle = "#FFFFFFBB";
+      filteredData.forEach((d) => {
+          hlCtx.beginPath();
+          hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + .8, 0, 2 * Math.PI);
+          hlCtx.fill();
+        });
+    }
+  } else {
+    if (props.quickButUgly) {
+      // No highlights: just show the dots
+      // Add dots (highlight)
+      hlCtx.fillStyle = "#6c655e";
+      data.forEach((d) => {
+        hlCtx.fillRect(x(d.x), y(d.y), 2 * (sizeRatio * d.size + 0.5), 2 * (sizeRatio * d.size + 0.5));
+      });
+    } else {
+      // No highlights: just show the dots
+      // Add dots (highlight)
+      hlCtx.fillStyle = "#6c655e";
+      data.forEach((d) => {
+        hlCtx.beginPath();
+        hlCtx.arc(x(d.x), y(d.y), sizeRatio * d.size + 0.5, 0, 2 * Math.PI);
+        hlCtx.fill();
+      });
+    }
+  }
+}
+
 function drawAnnotations(aCtx, sizing, labelRatio){
     const margin = sizing.margin;
     const width = sizing.width;
@@ -861,7 +863,7 @@ function drawAnnotations(aCtx, sizing, labelRatio){
         aCtx.fillText(d.label.toUpperCase(), x(d.x), y(d.y) + yOffset);
       });
     }
-  }
+}
 
 function getSizing() {
   let ns = {};
@@ -1061,8 +1063,19 @@ function buildExportImage() {
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom);
   let expCtx = exportCanvas.node().getContext("2d")
+  let tmpCanvas = d3
+    .select("#hidden-canvas-container canvas.tempCanvas")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom);
+  let tmpCtx = tmpCanvas.node().getContext("2d")
+
+  // Draw
   drawBackground(expCtx, sizing)
   drawAnnotations(expCtx, sizing, 1.8)
+
+  tmpCtx.clearRect(0, 0, tmpCtx.canvas.width, tmpCtx.canvas.height)
+  drawHighlights(tmpCtx, sizing, props.highlights)
+  expCtx.drawImage(tmpCtx.canvas, 0, 0)
 
   expCtx.canvas.toBlob(function(blob) {
     saveAs(blob, "Network viz.png");
