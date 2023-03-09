@@ -593,7 +593,6 @@ function drawBackground(bgCtx, sizing) {
   const sizeRatio = sizing.sizeRatio;
 
   const dotRadius = sizeRatio * appSettings.heatmapSpread * Math.min(width, height)/500
-  console.log("dotRadius", dotRadius)
 
   if (props.quickButUgly) {
     bgCtx.fillStyle = "#9ba7a9";
@@ -1110,6 +1109,13 @@ function buildExportImage() {
   let orderedNodes = getOrderedNodes(data, props.highlights)
   tmpCtx.clearRect(0, 0, tmpCtx.canvas.width, tmpCtx.canvas.height)
   drawLabels(tmpCtx, expCtx, sizing, orderedNodes, props.highlights, 2.4)
+
+  // Title text
+  let title = (props.query=="")?("Basemap"):("Query: "+props.query)
+  expCtx.font = '76px "IBM Plex Serif", serif';
+  expCtx.fillStyle = "#303040";
+  expCtx.textAlign = "left";
+  expCtx.fillText(title, 24, 80);
 
   expCtx.canvas.toBlob(function(blob) {
     saveAs(blob, "Network viz.png");
