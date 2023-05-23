@@ -88,6 +88,7 @@ const initQuery = function () {
   fetchES(appSettings.esIndex + "/_search/", body)
     .then((response) => {
       console.log("Response:", response);
+      window.lastResponse = response
       docsFetched.value = response.hits.hits;
       if (
         response.aggregations &&

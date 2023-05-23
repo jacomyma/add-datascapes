@@ -1129,4 +1129,11 @@ function buildExportImage() {
       .style("display", "none")
   }, 100)
 }
+
+/// Methods for the console
+window.downloadKeywords = function(){
+  let csvContent = d3.csvFormat(window.lastResponse.aggregations['entities-agg'].buckets)
+  const blob = new Blob([csvContent], { type: "text/plain" });
+  saveAs(blob, "Keywords.csv");
+}
 </script>
